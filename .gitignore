@@ -1,0 +1,13 @@
+/private
+/bin
+target
+.checkstyle
+.classpath
+.project
+.settings
+.DS_Store
+*IgnoreMe*
+Todos*
+Plan*
+/api
+defaulttestclass
