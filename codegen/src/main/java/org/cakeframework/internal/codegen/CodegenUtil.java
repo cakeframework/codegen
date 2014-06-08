@@ -70,6 +70,14 @@ public class CodegenUtil {
         return INDENT_CACHE[blocks];
     }
 
+    public static String spaces(int count) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < count; i++) {
+            sb.append(' ');
+        }
+        return sb.toString();
+    }
+
     public static String checkValidJavaIdentifier(String s) {
         if (!isJavaIdentifier(s)) {
             throw new IllegalArgumentException(s + " is not a valid Java identifier");
@@ -167,10 +175,20 @@ public class CodegenUtil {
         return s == null ? -1 : s.intValue();
     }
 
+    public static void main(String[] args) {
+        System.out.println(int[].class.getSimpleName());
+    }
+
     static StringBuilder toStringg(StringBuilder sb, Object... objects) {
         for (Object s : objects) {
             if (s instanceof Class) {
-                sb.append(((Class<?>) s).getSimpleName());
+                Class<?> cl = (Class<?>) s;
+                sb.append(cl.getSimpleName());
+                // if (cl.isArray()) {
+                // for (int i = 0; i < cl.getModifiers(); i++) {
+                //
+                // }
+                // }
             } else if (s instanceof Object[]) {
                 toStringg(sb, (Object[]) s);
             } else {
@@ -276,6 +294,38 @@ public class CodegenUtil {
             return (Class<T>) short.class;
         }
         return type;
+    }
+
+    /**
+     * Returns a new string where the first letter of the specified string is capitalized.
+     *
+     * @param str
+     *            the string to capitalize
+     * @return the string to capitalize
+     */
+    public static String capitalizeFirstLetter(String str) {
+        if (str.length() > 0) {
+            return replaceCharAt(str, 0, Character.toUpperCase(str.charAt(0)));
+        }
+        return str;
+    }
+
+    /**
+     * Returns a new string where the first letter of the specified string is capitalized.
+     *
+     * @param str
+     *            the string to capitalize
+     * @return the string to capitalize
+     */
+    public static String uncapitalizeFirstLetter(String str) {
+        if (str.length() > 0) {
+            return replaceCharAt(str, 0, Character.toLowerCase(str.charAt(0)));
+        }
+        return str;
+    }
+
+    public static String replaceCharAt(String s, int pos, char c) {
+        return s.substring(0, pos) + c + s.substring(pos + 1);
     }
     //
     // /**

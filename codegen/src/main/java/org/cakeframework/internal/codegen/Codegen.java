@@ -44,18 +44,28 @@ public class Codegen {
 
     private Object lateInitializer;
 
-    final Path sourcePath;
+    final ClassLoader parent;
 
     final PrintWriter[] pws;
 
-    final ClassLoader parent;
+    final Path sourcePath;
 
     public Codegen() {
         this(new CodegenConfiguration());
     }
 
-    public byte[] load(String name) {
-        return classLoader.load(name);
+    public Codegen(Codegen p) {
+        sourcePath = p.sourcePath;
+        defaultPackageName = p.defaultPackageName;
+        pws = p.pws;
+        this.parent = p.classLoader;
+        classLoader = AccessController.doPrivileged(new PrivilegedAction<JavaSourceClassLoader>() {
+            public JavaSourceClassLoader run() {
+                JavaSourceClassLoader l = new JavaSourceClassLoader(parent, new DefaultResourceFinder(), null);
+                l.setDebuggingInfo(true, true, true);
+                return l;
+            }
+        });
     }
 
     public Codegen(CodegenConfiguration configuration) {
@@ -71,20 +81,6 @@ public class Codegen {
             public JavaSourceClassLoader run() {
                 JavaSourceClassLoader l = new JavaSourceClassLoader(cl == null ? Thread.currentThread()
                         .getContextClassLoader() : cl, new DefaultResourceFinder(), null);
-                l.setDebuggingInfo(true, true, true);
-                return l;
-            }
-        });
-    }
-
-    public Codegen(Codegen p) {
-        sourcePath = p.sourcePath;
-        defaultPackageName = p.defaultPackageName;
-        pws = p.pws;
-        this.parent = p.classLoader;
-        classLoader = AccessController.doPrivileged(new PrivilegedAction<JavaSourceClassLoader>() {
-            public JavaSourceClassLoader run() {
-                JavaSourceClassLoader l = new JavaSourceClassLoader(parent, new DefaultResourceFinder(), null);
                 l.setDebuggingInfo(true, true, true);
                 return l;
             }
@@ -133,6 +129,10 @@ public class Codegen {
         return classLoader;
     }
 
+    public byte[] load(String name) {
+        return classLoader.load(name);
+    }
+
     public CodegenClass newClass() {
         return addClass(new CodegenClass());
     }
@@ -143,6 +143,12 @@ public class Codegen {
 
     public CodegenClass newClass(String definition) {
         return addClass(new CodegenClass().setDefinition(definition));
+    }
+
+    JavaSourceClassLoader newClassLoader(ClassLoader parent) {
+        JavaSourceClassLoader l = new JavaSourceClassLoader(parent, new DefaultResourceFinder(), null);
+        l.setDebuggingInfo(true, true, true);
+        return l;
     }
 
     public void setLateInitializerObject(Object o) {
@@ -184,11 +190,5 @@ public class Codegen {
                 }
             };
         }
-    }
-
-    JavaSourceClassLoader newClassLoader(ClassLoader parent) {
-        JavaSourceClassLoader l = new JavaSourceClassLoader(parent, new DefaultResourceFinder(), null);
-        l.setDebuggingInfo(true, true, true);
-        return l;
     }
 }

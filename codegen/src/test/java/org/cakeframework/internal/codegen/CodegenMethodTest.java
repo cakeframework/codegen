@@ -26,7 +26,7 @@ public class CodegenMethodTest extends AbstractCodegenTest {
     @Test
     public void methodAdd() {
         CodegenClass clz = c.newClass("public class Test");
-        CodegenMethod m = clz.newMethod("public void foo()");
+        CodegenMethod m = clz.addMethod("public void foo()");
         m.add("String str = \"fooo\";");
         m.add("int i = ", 123, ";");
         m.add("if (i > 321) {");

@@ -39,7 +39,7 @@ public class CodegenFormattingTest extends AbstractCodegenTest {
     public void simpleCallable() throws Exception {
         CodegenClass clz = c.newClass("public class Test implements Callable");
         clz.addImport(Callable.class);
-        clz.newMethod("public Object call()").add("return \"Hello\";");
+        clz.addMethod("public Object call()").add("return \"Hello\";");
         clz.compile();
     }
 
@@ -47,7 +47,7 @@ public class CodegenFormattingTest extends AbstractCodegenTest {
     public void simpleCallableWithPackage() throws Exception {
         CodegenClass clz = c.newClass("public class Test implements Callable").setPackage("test.test2");
         clz.addImport(Callable.class);
-        clz.newMethod("public Object call()").add("return \"Hello\";");
+        clz.addMethod("public Object call()").add("return \"Hello\";");
         clz.compile();
     }
 

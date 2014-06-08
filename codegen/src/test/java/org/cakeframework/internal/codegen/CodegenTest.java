@@ -38,7 +38,7 @@ public class CodegenTest {
         Codegen c = new Codegen();
         CodegenClass clz = c.newClass("public class Test implements Callable");
         clz.addImport(Callable.class);
-        clz.newMethod("public Object call()").add("return \"Hello\";");
+        clz.addMethod("public Object call()").add("return \"Hello\";");
         Class<Callable> call = clz.compile();
         assertEquals("Hello", call.newInstance().call());
     }
@@ -49,7 +49,7 @@ public class CodegenTest {
         Codegen c = new Codegen();
         CodegenClass clz = c.newClass("public class Test implements Callable").setPackage("test");
         clz.addImport(Callable.class);
-        clz.newMethod("public Object call()").add("return \"Hello\";");
+        clz.addMethod("public Object call()").add("return \"Hello\";");
         Class<Callable> call = clz.compile();
         assertEquals("Hello", call.newInstance().call());
     }
@@ -61,7 +61,7 @@ public class CodegenTest {
 
         CodegenClass clz1 = c.newClass("public class Test implements Callable");
         clz1.addImport(Callable.class);
-        clz1.newMethod("public Object call()").add("return getClass().getName();");
+        clz1.addMethod("public Object call()").add("return getClass().getName();");
 
         CodegenClass clz2 = c.newClass("public class Test2 extends Test");
 
@@ -83,7 +83,7 @@ public class CodegenTest {
 
         CodegenClass clz1 = c.newClass("public class Test implements Callable");
         clz1.addImport(Callable.class);
-        clz1.newMethod("public Object call()").add("return getClass().getName();");
+        clz1.addMethod("public Object call()").add("return getClass().getName();");
 
         Class<Callable> call = clz1.compile();
         assertEquals("Test", call.newInstance().call());
@@ -101,7 +101,7 @@ public class CodegenTest {
     private static Class<Callable<String>> createSimpleClass(Codegen codegen) {
         CodegenClass clz1 = codegen.newClass("public class Test implements Callable");
         clz1.addImport(Callable.class);
-        clz1.newMethod("public Object call()").add("return getClass().getName();");
+        clz1.addMethod("public Object call()").add("return getClass().getName();");
         return (Class) clz1.compile();
     }
 

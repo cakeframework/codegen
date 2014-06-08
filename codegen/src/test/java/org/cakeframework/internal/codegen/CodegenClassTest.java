@@ -37,8 +37,8 @@ public class CodegenClassTest extends AbstractCodegenTest {
         CodegenClass clz = c.newClass("public class Test");
         clz.addField("String foo;");
         clz.addField("int boo;");
-        clz.newMethod("Test(String foo)").add("this.foo = foo;");
-        clz.newMethod("public Test(int boo)").add("this.boo = boo;");
+        clz.addMethod("Test(String foo)").add("this.foo = foo;");
+        clz.addMethod("public Test(int boo)").add("this.boo = boo;");
         clz.compile();
     }
 

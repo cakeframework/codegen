@@ -58,7 +58,6 @@ public final class JavaSourceIClassLoader extends IClassLoader {
     public JavaSourceIClassLoader(ResourceFinder sourceFinder, String optionalCharacterEncoding, Set unitCompilers, // UnitCompiler
             IClassLoader optionalParentIClassLoader) {
         super(optionalParentIClassLoader);
-
         this.sourceFinder = sourceFinder;
         this.optionalCharacterEncoding = optionalCharacterEncoding;
         this.unitCompilers = unitCompilers;
@@ -95,17 +94,20 @@ public final class JavaSourceIClassLoader extends IClassLoader {
      *             if an exception was raised while loading the {@link IClass}
      */
     public IClass findIClass(final String type) throws ClassNotFoundException {
-        if (JavaSourceIClassLoader.DEBUG)
+        if (JavaSourceIClassLoader.DEBUG) {
             System.out.println("type = " + type);
+        }
 
         // Class type.
         String className = Descriptor.toClassName(type); // E.g. "pkg1.pkg2.Outer$Inner"
-        if (JavaSourceIClassLoader.DEBUG)
+        if (JavaSourceIClassLoader.DEBUG) {
             System.out.println("2 className = \"" + className + "\"");
+        }
 
         // Do not attempt to load classes from package "java".
-        if (className.startsWith("java."))
+        if (className.startsWith("java.")) {
             return null;
+        }
 
         // Determine the name of the top-level class.
         String topLevelClassName;
@@ -121,8 +123,9 @@ public final class JavaSourceIClassLoader extends IClassLoader {
             if (res != null) {
                 if (!className.equals(topLevelClassName)) {
                     res = uc.findClass(className);
-                    if (res == null)
+                    if (res == null) {
                         return null;
+                    }
                 }
                 this.defineIClass(res);
                 return res;
@@ -131,10 +134,12 @@ public final class JavaSourceIClassLoader extends IClassLoader {
 
         // Find source file.
         Resource sourceResource = this.sourceFinder.findResource(ClassFile.getSourceResourceName(className));
-        if (sourceResource == null)
+        if (sourceResource == null) {
             return null;
-        if (JavaSourceIClassLoader.DEBUG)
+        }
+        if (JavaSourceIClassLoader.DEBUG) {
             System.out.println("sourceURL=" + sourceResource);
+        }
 
         try {
 
@@ -163,8 +168,8 @@ public final class JavaSourceIClassLoader extends IClassLoader {
             IClass res = uc.findClass(className);
             if (res == null) {
                 if (className.equals(topLevelClassName)) {
-                    throw new CompileException(("Source file \"" + sourceResource.getFileName()
-                            + "\" does not declare class \"" + className + "\""), (Location) null);
+                    throw new CompileException("Source file \"" + sourceResource.getFileName()
+                            + "\" does not declare class \"" + className + "\"", (Location) null);
                 }
                 return null;
             }

@@ -78,7 +78,7 @@ public final class Literal extends Expression {
         } else if (type == long.class) {
             return new Literal(Long.valueOf(0L));
         } else {
-            throw new RuntimeException("Not implemented yet");
+            throw new RuntimeException("Not implemented yet " + type);
         }
     }
 

@@ -31,7 +31,7 @@ public class CodegenAbstractTest extends AbstractCodegenTest {
     @Test
     public void abstractMethod() {
         CodegenClass clz = c.newClass("public abstract class Test");
-        clz.newMethod("public abstract void foo()");
+        clz.addMethod("public abstract void foo()");
         clz.compile();
     }
 }

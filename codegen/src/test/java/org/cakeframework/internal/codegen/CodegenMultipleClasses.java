@@ -34,14 +34,14 @@ public class CodegenMultipleClasses {
         CodegenClass clz1 = c.newClass("public class A implements Callable");
         clz1.addImport(Callable.class);
         clz1.addField("B b;");
-        clz1.newMethod("public A(B b)").add("this.b = b;");
-        clz1.newMethod("public Object call()").add("return b;");
+        clz1.addMethod("public A(B b)").add("this.b = b;");
+        clz1.addMethod("public Object call()").add("return b;");
 
         CodegenClass clz2 = c.newClass("public class B implements Callable");
         clz2.addImport(Callable.class);
         clz2.addField("Integer i1;");
-        clz2.newMethod("public B(Integer i1)").add("this.i1 = i1;");
-        clz2.newMethod("public Object call()").add("return i1;");
+        clz2.addMethod("public B(Integer i1)").add("this.i1 = i1;");
+        clz2.addMethod("public Object call()").add("return i1;");
 
         @SuppressWarnings("unchecked")
         Callable<Integer> b = (Callable<Integer>) clz2.compile().getConstructors()[0].newInstance(123);

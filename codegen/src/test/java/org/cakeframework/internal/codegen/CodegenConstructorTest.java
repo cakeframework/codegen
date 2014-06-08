@@ -40,8 +40,8 @@ public class CodegenConstructorTest extends AbstractCodegenTest {
         CodegenClass clz1 = c.newClass("public class Test implements Callable");
         clz1.addImport(Callable.class);
         clz1.addField("String value;");
-        clz1.newMethod("public (String value)").add("this.value = value;");
-        clz1.newMethod("public Object call()").add("return value;");
+        clz1.addMethod("public (String value)").add("this.value = value;");
+        clz1.addMethod("public Object call()").add("return value;");
 
         Class<Callable> call = clz1.compile();
         assertEquals(1, call.getDeclaredConstructors().length);

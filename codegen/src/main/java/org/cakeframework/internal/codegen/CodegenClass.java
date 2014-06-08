@@ -47,25 +47,11 @@ public class CodegenClass extends AbstractCodegenEntity {
 
     private String definition;
 
-    private final ArrayList<CodegenMethod> methods = new ArrayList<>(5);
+    private final JavadocBuilder javadoc = new JavadocBuilder();
 
     private String license;
 
-    /**
-     * @return the license
-     */
-    public String getLicense() {
-        return license;
-    }
-
-    /**
-     * @param license
-     *            the license to set
-     */
-    public CodegenClass setLicense(String license) {
-        this.license = license;
-        return this;
-    }
+    private final ArrayList<CodegenMethod> methods = new ArrayList<>(5);
 
     private String packageName;
 
@@ -74,22 +60,11 @@ public class CodegenClass extends AbstractCodegenEntity {
 
     private Type type;
 
-    private final JavadocBuilder javadoc = new JavadocBuilder();
-
-    public CodegenClass addJavadoc(String javadoc) {
-        this.javadoc.set(javadoc);
-        return this;
-    }
-
-    public CodegenClass addJavadoc(Object... definition) {
-        return addJavadoc(toStringg(definition));
-    }
-
-    public CodegenClass addAnnotation(String annotation) {
+    public CodegenClass addAnnotation(Class<?> annotation) {
         return annotations.addAnnotation(this, annotation);
     }
 
-    public CodegenClass addAnnotation(Class<?> annotation) {
+    public CodegenClass addAnnotation(String annotation) {
         return annotations.addAnnotation(this, annotation);
     }
 
@@ -119,6 +94,31 @@ public class CodegenClass extends AbstractCodegenEntity {
         return (CodegenClass) super.addImports(imports);
     }
 
+    public final CodegenClass addInnerClass() {
+        CodegenClass cc = new CodegenClass();
+        addInnerClass(cc);
+        return cc;
+    }
+
+    public final CodegenClass addInnerClass(Object... definition) {
+        CodegenClass cc = addInnerClass();
+        cc.setDefinition(definition);
+        return cc;
+    }
+
+    public CodegenClass addJavadoc(Object... definition) {
+        return addJavadoc(toStringg(definition));
+    }
+
+    public CodegenClass addJavadoc(String javadoc) {
+        this.javadoc.set(javadoc);
+        return this;
+    }
+
+    public final CodegenMethod addMethod() {
+        return addMethod(new CodegenMethod());
+    }
+
     public final CodegenMethod addMethod(boolean predicate, CodegenMethod method) {
         if (predicate) {
             addMethod(method);
@@ -132,14 +132,21 @@ public class CodegenClass extends AbstractCodegenEntity {
         return method;
     }
 
+    public final CodegenMethod addMethod(Object... definition) {
+        return addMethod(toStringg(definition));
+    }
+
+    /** Creates a new method using the specified definition. */
+    public final CodegenMethod addMethod(String definition) {
+        CodegenMethod m = addMethod(new CodegenMethod());
+        m.setDeclaration(definition);
+        return m;
+    }
+
     public final void addMethods(CodegenMethod... methods) {
         for (CodegenMethod o : methods) {
             addMethod(o);
         }
-    }
-
-    public final CodegenMethod addNewMethod() {
-        return addMethod(new CodegenMethod());
     }
 
     @SuppressWarnings("unchecked")
@@ -199,6 +206,13 @@ public class CodegenClass extends AbstractCodegenEntity {
         return getQualifiedName().replace(".", "/") + ".java";
     }
 
+    /**
+     * @return the license
+     */
+    public String getLicense() {
+        return license;
+    }
+
     public final List<CodegenMethod> getMethods() {
         return methods;
     }
@@ -221,29 +235,6 @@ public class CodegenClass extends AbstractCodegenEntity {
      */
     public Type getType() {
         return type;
-    }
-
-    public final CodegenClass newInnerClass(Object... definition) {
-        CodegenClass cc = newInnerClass();
-        cc.setDefinition(definition);
-        return cc;
-    }
-
-    public final CodegenClass newInnerClass() {
-        CodegenClass cc = new CodegenClass();
-        addInnerClass(cc);
-        return cc;
-    }
-
-    public final CodegenMethod newMethod(Object... definition) {
-        return newMethod(toStringg(definition));
-    }
-
-    /** Creates a new method using the specified definition. */
-    public final CodegenMethod newMethod(String definition) {
-        CodegenMethod m = addMethod(new CodegenMethod());
-        m.setDeclaration(definition);
-        return m;
     }
 
     /**
@@ -279,6 +270,15 @@ public class CodegenClass extends AbstractCodegenEntity {
         return this;
     }
 
+    /**
+     * @param license
+     *            the license to set
+     */
+    public CodegenClass setLicense(String license) {
+        this.license = license;
+        return this;
+    }
+
     public final CodegenClass setPackage(Package p) {
         return setPackage(p.getName());
     }
@@ -293,42 +293,6 @@ public class CodegenClass extends AbstractCodegenEntity {
 
     public final String toString() {
         return toString(new StringBuilder()).toString();
-    }
-
-    public Path writeSource(Path root) throws IOException {
-        return writeSource(toString(new StringBuilder()), root);
-    }
-
-    Path writeSource(StringBuilder s, Path root) throws IOException {
-        if (!Files.exists(root)) {
-            throw new IllegalArgumentException("The specified root path does not exist, path = " + root);
-        } else if (!Files.isDirectory(root)) {
-            throw new IllegalArgumentException("The specified root path was not a directory, path = " + root);
-        }
-        Path dir = root;
-        String p = getPackage();
-        if (p != null) {
-            for (String ss : p.split("\\.")) {
-                dir = dir.resolve(ss);
-            }
-        }
-        Files.createDirectories(dir);
-        Path file = dir.resolve(getSimpleName() + ".java");
-        final ByteArrayOutputStream srcOS = new ByteArrayOutputStream();
-        PrintWriter pw = new PrintWriter(new OutputStreamWriter(srcOS, StandardCharsets.US_ASCII), true);
-        pw.append(s).flush();
-        byte[] bytes = srcOS.toByteArray();
-
-        if (Files.exists(file)) {
-            byte[] previous = Files.readAllBytes(file);
-            if (Arrays.equals(bytes, previous)) {
-                return null;
-            }
-        }
-        try (OutputStream os = new BufferedOutputStream(Files.newOutputStream(file));) {
-            os.write(bytes);
-        }
-        return file;
     }
 
     final StringBuilder toString(StringBuilder sb) {
@@ -396,9 +360,45 @@ public class CodegenClass extends AbstractCodegenEntity {
         return sb;
     }
 
+    public Path writeSource(Path root) throws IOException {
+        return writeSource(toString(new StringBuilder()), root);
+    }
+
+    Path writeSource(StringBuilder s, Path root) throws IOException {
+        if (!Files.exists(root)) {
+            throw new IllegalArgumentException("The specified root path does not exist, path = " + root);
+        } else if (!Files.isDirectory(root)) {
+            throw new IllegalArgumentException("The specified root path was not a directory, path = " + root);
+        }
+        Path dir = root;
+        String p = getPackage();
+        if (p != null) {
+            for (String ss : p.split("\\.")) {
+                dir = dir.resolve(ss);
+            }
+        }
+        Files.createDirectories(dir);
+        Path file = dir.resolve(getSimpleName() + ".java");
+        final ByteArrayOutputStream srcOS = new ByteArrayOutputStream();
+        PrintWriter pw = new PrintWriter(new OutputStreamWriter(srcOS, StandardCharsets.US_ASCII), true);
+        pw.append(s).flush();
+        byte[] bytes = srcOS.toByteArray();
+
+        if (Files.exists(file)) {
+            byte[] previous = Files.readAllBytes(file);
+            if (Arrays.equals(bytes, previous)) {
+                return null;
+            }
+        }
+        try (OutputStream os = new BufferedOutputStream(Files.newOutputStream(file));) {
+            os.write(bytes);
+        }
+        return file;
+    }
+
     // TopTypes: Class, Interface, Enum, Annotation,
     // Executable: Methods, Constructors
     enum Type {
-        ANNOTATION, CLASS, INTERFACE, ENUM;
+        ANNOTATION, CLASS, ENUM, INTERFACE;
     }
 }

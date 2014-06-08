@@ -148,7 +148,6 @@ public class JavaSourceClassLoader extends ClassLoader {
      * @throws ClassNotFoundException
      */
     protected Class findClass(String name) throws ClassNotFoundException {
-
         // Check if the bytecode for that class was generated already.
         byte[] bytecode = (byte[]) this.precompiledClasses.remove(name);
         if (bytecode == null) {
@@ -174,6 +173,7 @@ public class JavaSourceClassLoader extends ClassLoader {
     }
 
     public byte[] load(String name) {
+
         // Check if the bytecode for that class was generated already.
         byte[] bytecode = (byte[]) this.precompiledClasses.remove(name);
         if (bytecode == null) {

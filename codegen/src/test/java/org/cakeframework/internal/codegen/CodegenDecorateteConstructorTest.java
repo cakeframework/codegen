@@ -36,7 +36,7 @@ public class CodegenDecorateteConstructorTest {
         CodegenClass clz1 = c.newClass("public class DecorateConstructor implements Callable");
         clz1.addImport(Callable.class);
         clz1.addField("Integer i1;");
-        clz1.newMethod("public (Integer i1)").add("this.i1 = i1;");
+        clz1.addMethod("public (Integer i1)").add("this.i1 = i1;");
 
         // Now lets decorate
         clz1.addField("Integer i2;");
@@ -46,7 +46,7 @@ public class CodegenDecorateteConstructorTest {
             d.add("this.i2 = i2;");
         }
 
-        clz1.newMethod("public Object call()").add("return i1 + i2;");
+        clz1.addMethod("public Object call()").add("return i1 + i2;");
 
         Class<Callable> call = clz1.compile();
         assertEquals(1, call.getDeclaredConstructors().length);
@@ -62,8 +62,8 @@ public class CodegenDecorateteConstructorTest {
         CodegenClass clz1 = c.newClass("public class DecorateMultipleConstructors implements Callable");
         clz1.addImport(Callable.class);
         clz1.addField("Integer i1;");
-        clz1.newMethod("public (Integer i1)").add("this.i1 = i1;");
-        clz1.newMethod("public (String ignore, Integer i1)").add("this.i1 = i1;");
+        clz1.addMethod("public (Integer i1)").add("this.i1 = i1;");
+        clz1.addMethod("public (String ignore, Integer i1)").add("this.i1 = i1;");
 
         // Now lets decorate
         clz1.addField("Integer i2;");
@@ -72,7 +72,7 @@ public class CodegenDecorateteConstructorTest {
             d.add("this.i2 = i2;");
         }
 
-        clz1.newMethod("public Object call()").add("return i1 + i2;");
+        clz1.addMethod("public Object call()").add("return i1 + i2;");
 
         Class<Callable> call = clz1.compile();
         assertEquals(2, call.getDeclaredConstructors().length);

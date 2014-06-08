@@ -26,7 +26,7 @@ public class CodegenBlockTest extends AbstractCodegenTest {
     @Test
     public void simpleBlock() {
         CodegenClass clz = c.newClass("public class Test");
-        CodegenMethod m = clz.newMethod("public void foo()");
+        CodegenMethod m = clz.addMethod("public void foo()");
         m.add("String str = \"fooo\";");
         m.add("int i = ", 123, ";");
         CodegenBlock b = m.newNestedBlock("if (i > 321)");
@@ -38,7 +38,7 @@ public class CodegenBlockTest extends AbstractCodegenTest {
     @Test
     public void multipleBlocks() {
         CodegenClass clz = c.newClass("public class Test");
-        CodegenMethod m = clz.newMethod("public void foo()");
+        CodegenMethod m = clz.addMethod("public void foo()");
         m.add("String str = \"fooo\";");
         m.add("int i = ", 123, ";");
         CodegenBlock b1 = m.newNestedBlock("if (i > 321)");
@@ -51,7 +51,7 @@ public class CodegenBlockTest extends AbstractCodegenTest {
     @Test
     public void multipleBlockArguments() {
         CodegenClass clz = c.newClass("public class Test");
-        CodegenMethod m = clz.newMethod("public void foo()");
+        CodegenMethod m = clz.addMethod("public void foo()");
         m.add("int i = ", 123, ";");
         m.newNestedBlock("if (i > ", 321, ")");
         clz.compile();
@@ -60,7 +60,7 @@ public class CodegenBlockTest extends AbstractCodegenTest {
     @Test
     public void nestedBlocks() {
         CodegenClass clz = c.newClass("public class Test");
-        CodegenMethod m = clz.newMethod("public void foo()");
+        CodegenMethod m = clz.addMethod("public void foo()");
         m.add("String str = \"fooo\";");
         m.add("int i = ", 123, ";");
         CodegenBlock b1 = m.newNestedBlock("if (i > 321)");
