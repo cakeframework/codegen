@@ -23,18 +23,27 @@ import org.cakeframework.internal.codegen.model.expression.BinaryExpression.BiOp
 import org.cakeframework.internal.codegen.model.expression.EncapsulatedExpression;
 import org.cakeframework.internal.codegen.model.expression.Expression;
 import org.cakeframework.internal.codegen.model.expression.Literal;
+import org.cakeframework.internal.codegen.model.expression.NameExpression;
 import org.cakeframework.internal.codegen.model.expression.UnaryExpression;
 import org.cakeframework.internal.codegen.model.expression.UnaryExpression.UnOperator;
 
 /**
  * A visitor that simplifies the generated code.
- * 
+ *
  * @author Kasper Nielsen
  */
 public class SimplifyingVisitor extends ModifyingCodegenVisitor {
 
     private AbstractASTNode v(AbstractASTNode a) {
         return (AbstractASTNode) a.accept(this);
+    }
+
+    public AbstractASTNode visit(EncapsulatedExpression n) {
+        AbstractASTNode e = v(n.getInner());
+        if (e instanceof NameExpression) {
+            return e;
+        }
+        return n;
     }
 
     /** {@inheritDoc} */

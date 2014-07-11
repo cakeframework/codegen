@@ -1,3 +1,4 @@
+
 /*
  * Janino - An embedded Java[TM] compiler
  *
@@ -25,93 +26,106 @@
 
 package org.cakeframework.internal.codegen.compiler.compiler;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.io.StringReader;
+import java.io.*;
 
-/**
- * Base class for a simple {@link ICookable}.
- */
-public abstract class Cookable implements ICookable {
+/** Base class for a simple {@link ICookable}. */
+public abstract
+class Cookable implements ICookable {
 
-    public abstract void cook(String optionalFileName, Reader r) throws CompileException, IOException;
+    /** @see ICookable#cook(String, Reader) */
+    @Override public abstract void
+    cook(String optionalFileName, Reader r) throws CompileException, IOException;
 
-    public final void cook(Reader r) throws CompileException, IOException {
-        this.cook(null, r);
-    }
+    /** @see ICookable#cook(Reader) */
+    @Override public final void
+    cook(Reader r) throws CompileException, IOException { this.cook(null, r); }
 
-    public final void cook(InputStream is) throws CompileException, IOException {
-        this.cook(null, is);
-    }
+    /** @see ICookable#cook(InputStream) */
+    @Override public final void
+    cook(InputStream is) throws CompileException, IOException { this.cook(null, is); }
 
-    public final void cook(String optionalFileName, InputStream is) throws CompileException, IOException {
+    /** @see ICookable#cook(String, InputStream) */
+    @Override public final void
+    cook(String optionalFileName, InputStream is) throws CompileException, IOException {
         this.cook(optionalFileName, is, null);
     }
 
-    public final void cook(InputStream is, String optionalEncoding) throws CompileException, IOException {
+    /** @see ICookable#cook(InputStream, String) */
+    @Override public final void
+    cook(InputStream is, String optionalEncoding) throws CompileException, IOException {
         this.cook(optionalEncoding == null ? new InputStreamReader(is) : new InputStreamReader(is, optionalEncoding));
     }
 
-    public final void cook(String optionalFileName, InputStream is, String optionalEncoding) throws CompileException,
-            IOException {
-        this.cook(optionalFileName, optionalEncoding == null ? new InputStreamReader(is) : new InputStreamReader(is,
-                optionalEncoding));
+    /** @see ICookable#cook(String, InputStream, String) */
+    @Override public final void
+    cook(String optionalFileName, InputStream is, String optionalEncoding) throws CompileException, IOException {
+        this.cook(
+            optionalFileName,
+            optionalEncoding == null ? new InputStreamReader(is) : new InputStreamReader(is, optionalEncoding)
+        );
     }
 
-    public void cook(String s) throws CompileException {
+    /** @see ICookable#cook(String) */
+    @Override public void
+    cook(String s) throws CompileException {
         this.cook((String) null, s);
     }
 
-    public void cook(String optionalFileName, String s) throws CompileException {
+    /** @see ICookable#cook(String, String) */
+    @Override public void
+    cook(String optionalFileName, String s) throws CompileException {
         try {
             this.cook(optionalFileName, new StringReader(s));
         } catch (IOException ioe) {
             ioe.printStackTrace();
+            // SUPPRESS CHECKSTYLE AvoidHidingCause
             throw new RuntimeException("SNO: StringReader throws IOException");
         }
     }
 
-    public final void cookFile(File file) throws CompileException, IOException {
+    /** @see ICookable#cookFile(File) */
+    @Override public final void
+    cookFile(File file) throws CompileException, IOException {
         this.cookFile(file, null);
     }
 
-    public final void cookFile(File file, String optionalEncoding) throws CompileException, IOException {
+    /** @see ICookable#cookFile(File, String) */
+    @Override public final void
+    cookFile(File file, String optionalEncoding) throws CompileException, IOException {
         InputStream is = new FileInputStream(file);
         try {
-            this.cook(file.getAbsolutePath(), optionalEncoding == null ? new InputStreamReader(is)
-                    : new InputStreamReader(is, optionalEncoding));
+            this.cook(
+                file.getAbsolutePath(),
+                optionalEncoding == null ? new InputStreamReader(is) : new InputStreamReader(is, optionalEncoding)
+            );
             is.close();
             is = null;
         } finally {
-            if (is != null)
-                try {
-                    is.close();
-                } catch (IOException ex) {}
+            if (is != null) try { is.close(); } catch (IOException ex) {}
         }
     }
 
-    public final void cookFile(String fileName) throws CompileException, IOException {
+    /** @see ICookable#cookFile(String) */
+    @Override public final void
+    cookFile(String fileName) throws CompileException, IOException {
         this.cookFile(fileName, null);
     }
 
-    public final void cookFile(String fileName, String optionalEncoding) throws CompileException, IOException {
+    /** @see ICookable#cookFile(String, String) */
+    @Override public final void
+    cookFile(String fileName, String optionalEncoding) throws CompileException, IOException {
         this.cookFile(new File(fileName), optionalEncoding);
     }
 
-    /**
-     * Reads all characters from the given {@link Reader} into a {@link String}.
-     */
-    public static String readString(Reader r) throws IOException {
-        StringBuffer sb = new StringBuffer();
-        char[] ca = new char[4096];
+    /** Reads all characters from the given {@link Reader} into a {@link String}. */
+    public static String
+    readString(Reader r) throws IOException {
+
+        StringBuilder sb = new StringBuilder();
+        char[]        ca = new char[4096];
         for (;;) {
             int count = r.read(ca);
-            if (count == -1)
-                break;
+            if (count == -1) break;
             sb.append(ca, 0, count);
         }
         String s = sb.toString();

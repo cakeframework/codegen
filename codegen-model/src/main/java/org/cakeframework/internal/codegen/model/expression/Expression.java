@@ -48,12 +48,20 @@ public abstract class Expression extends AbstractASTNode {
         return new AssignExpression(this, AssignExpression.AsOperator.ASSIGN, other);
     }
 
+    public BinaryExpression divide(Expression other) {
+        return new BinaryExpression(this, BinaryExpression.BiOperator.DIVIDE, other);
+    }
+
     public BinaryExpression minus(Expression other) {
         return new BinaryExpression(this, BinaryExpression.BiOperator.MINUS, other);
     }
 
     public BinaryExpression notEquals(Expression other) {
         return new BinaryExpression(this, BinaryExpression.BiOperator.NOT_EQUALS, other);
+    }
+
+    public UnaryExpression preIncrement() {
+        return new UnaryExpression(this, UnOperator.PRE_INCREMENT);
     }
 
     public UnaryExpression postIncrement() {
@@ -70,6 +78,10 @@ public abstract class Expression extends AbstractASTNode {
 
     public BinaryExpression greaterThen(Expression other) {
         return new BinaryExpression(this, BiOperator.GREATER_THEN, other);
+    }
+
+    public BinaryExpression greaterThenOrEquals(Expression other) {
+        return new BinaryExpression(this, BiOperator.GREATER_THEN_OR_EQUALS, other);
     }
 
     public BinaryExpression lessThen(Expression other) {

@@ -25,19 +25,28 @@
 
 package org.cakeframework.internal.codegen.compiler.compiler;
 
-import org.cakeframework.internal.codegen.compiler.JavaSourceClassLoader;
-
+/**
+ * An entity that produces implementations of {@link IExpressionEvaluator}, {@link IScriptEvaluator},
+ * {@link IClassBodyEvaluator}, {@link ISimpleCompiler} or {@link AbstractJavaSourceClassLoader}.
+ * <p>
+ * Implementations of this interface are, e.g. 'org.codehaus.janino' or 'org.codehaus.commons.compiler.jdk'.
+ */
 public interface ICompilerFactory {
 
     /**
-     * @return A {@link String} that identifies the concrete implementation of this interface, e.g.
-     *         'org.codehaus.janino' or 'org.codehaus.commons.compiler.jdk'
+     * @return A {@link String} which uniquely identifies the concrete implementation of this interface, e.g.
+     *         "org.codehaus.janino" or "org.codehaus.commons.compiler.jdk"
      */
     String getId();
 
     /**
-     * @return The version of <i>this</i> implementation of the commons-compiler specification, or <code>null</code>
+     * @return A human-readable {@link String} that identifies the concrete implementation of this interface in a user
+     *         interface, e.g. "janino" or "jdk"
      */
+    @Override
+    String toString();
+
+    /** @return The version of <i>this</i> implementation of the commons-compiler specification, or <code>null</code> */
     String getImplementationVersion();
 
     /**
@@ -56,15 +65,15 @@ public interface ICompilerFactory {
 
     /**
      * @throws UnsupportedOperationException
-     *             The underlying implementation does not implement an {@link JavaSourceClassLoader}
-     * @see JavaSourceClassLoader
+     *             The underlying implementation does not implement an {@link AbstractJavaSourceClassLoader}
+     * @see AbstractJavaSourceClassLoader
      */
-    JavaSourceClassLoader newJavaSourceClassLoader();
+    AbstractJavaSourceClassLoader newJavaSourceClassLoader();
 
     /**
      * @throws UnsupportedOperationException
-     *             The underlying implementation does not implement an {@link JavaSourceClassLoader}
-     * @see JavaSourceClassLoader
+     *             The underlying implementation does not implement an {@link AbstractJavaSourceClassLoader}
+     * @see AbstractJavaSourceClassLoader
      */
-    JavaSourceClassLoader newJavaSourceClassLoader(ClassLoader parentClassLoader);
+    AbstractJavaSourceClassLoader newJavaSourceClassLoader(ClassLoader parentClassLoader);
 }

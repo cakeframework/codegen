@@ -1,7 +1,7 @@
 /*
  * Janino - An embedded Java[TM] compiler
  *
- * Copyright (c) 2001-2010, Arno Unkrig
+ * Copyright (c) 2010, Arno Unkrig
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification, are permitted provided that the
@@ -25,30 +25,35 @@
 
 package org.cakeframework.internal.codegen.compiler.compiler;
 
-import org.cakeframework.internal.codegen.compiler.JavaSourceClassLoader;
-
-/**
- * Base class for a simple {@link ICompilerFactory}.
- */
+/** Base class for a simple {@link ICompilerFactory}. */
 public abstract class AbstractCompilerFactory implements ICompilerFactory {
 
+    @Override
     public abstract String getId();
 
+    @Override
+    public abstract String toString();
+
+    @Override
     public abstract String getImplementationVersion();
 
+    @Override
     public IClassBodyEvaluator newClassBodyEvaluator() {
         throw new UnsupportedOperationException(this.getId() + ": newClassBodyEvaluator");
     }
 
+    @Override
     public ISimpleCompiler newSimpleCompiler() {
         throw new UnsupportedOperationException(this.getId() + ": newSimpleCompiler");
     }
 
-    public JavaSourceClassLoader newJavaSourceClassLoader() {
+    @Override
+    public AbstractJavaSourceClassLoader newJavaSourceClassLoader() {
         throw new UnsupportedOperationException(this.getId() + ": newJavaSourceClassLoader");
     }
 
-    public JavaSourceClassLoader newJavaSourceClassLoader(ClassLoader parentClassLoader) {
+    @Override
+    public AbstractJavaSourceClassLoader newJavaSourceClassLoader(ClassLoader parentClassLoader) {
         throw new UnsupportedOperationException(this.getId() + ": newJavaSourceClassLoader(ClassLoader)");
     }
 }

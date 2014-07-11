@@ -1,3 +1,4 @@
+
 /*
  * Janino - An embedded Java[TM] compiler
  *
@@ -25,34 +26,35 @@
 
 package org.cakeframework.internal.codegen.compiler;
 
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 
 import org.cakeframework.internal.codegen.compiler.util.ClassFile;
-import org.cakeframework.internal.codegen.compiler.util.resource.Resource;
-import org.cakeframework.internal.codegen.compiler.util.resource.ResourceFinder;
+import org.cakeframework.internal.codegen.compiler.util.resource.*;
+
 
 /**
- * This {@link org.cakeframework.internal.codegen.compiler.IClassLoader} loads IClasses through a a
- * {@link org.cakeframework.internal.codegen.compiler.util.resource.ResourceFinder} that designates
+ * This {@link org.cakeframework.internal.codegen.compiler.IClassLoader} loads IClasses through a
+ * a {@link org.cakeframework.internal.codegen.compiler.util.resource.ResourceFinder} that designates
  * {@link org.cakeframework.internal.codegen.compiler.util.ClassFile}s.
  */
-public class ResourceFinderIClassLoader extends IClassLoader {
+public
+class ResourceFinderIClassLoader extends IClassLoader {
     private final ResourceFinder resourceFinder;
 
-    public ResourceFinderIClassLoader(ResourceFinder resourceFinder, IClassLoader optionalParentIClassLoader) {
+    public
+    ResourceFinderIClassLoader(ResourceFinder resourceFinder, IClassLoader optionalParentIClassLoader) {
         super(optionalParentIClassLoader);
         this.resourceFinder = resourceFinder;
         this.postConstruct();
     }
 
-    protected IClass findIClass(String descriptor) throws ClassNotFoundException {
+    @Override protected IClass
+    findIClass(String descriptor) throws ClassNotFoundException {
         String className = Descriptor.toClassName(descriptor);
 
         // Find the class file resource.
         Resource classFileResource = this.resourceFinder.findResource(ClassFile.getClassFileResourceName(className));
-        if (classFileResource == null)
-            return null;
+        if (classFileResource == null) return null;
 
         // Open the class file resource.
         InputStream is;
@@ -69,13 +71,10 @@ public class ResourceFinderIClassLoader extends IClassLoader {
         } catch (IOException e) {
             throw new ClassNotFoundException("Reading resource \"" + classFileResource.getFileName() + "\"", e);
         } finally {
-            try {
-                is.close();
-            } catch (IOException e) {}
+            try { is.close(); } catch (IOException e) {}
         }
         IClass iClass = new ClassFileIClass(cf, this);
         this.defineIClass(iClass);
         return iClass;
     }
-
 }

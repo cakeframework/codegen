@@ -1,3 +1,4 @@
+
 /*
  * Janino - An embedded Java[TM] compiler
  *
@@ -26,11 +27,15 @@
 package org.cakeframework.internal.codegen.compiler;
 
 /**
- * Represents a problem that occurred while unescaping a unicode escape sequence through a
- * {@link org.cakeframework.internal.codegen.compiler.UnicodeUnescapeReader}.
+ * Represents a problem that occurred while unescaping a unicode escape
+ * sequence through a {@link org.cakeframework.internal.codegen.compiler.UnicodeUnescapeReader}.
  */
-public class UnicodeUnescapeException extends RuntimeException {
-    public UnicodeUnescapeException(String message) {
-        super(message);
-    }
+public
+class UnicodeUnescapeException extends RuntimeException {
+
+    public
+    UnicodeUnescapeException(String message) { super(message); }
+
+    public
+    UnicodeUnescapeException(String message, Throwable cause) { super(message, cause); }
 }

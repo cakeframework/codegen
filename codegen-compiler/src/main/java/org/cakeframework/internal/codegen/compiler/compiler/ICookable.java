@@ -1,3 +1,4 @@
+
 /*
  * Janino - An embedded Java[TM] compiler
  *
@@ -25,19 +26,23 @@
 
 package org.cakeframework.internal.codegen.compiler.compiler;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.Reader;
+import java.io.*;
+
+import org.cakeframework.internal.codegen.compiler.ClassBodyEvaluator;
+import org.cakeframework.internal.codegen.compiler.ErrorHandler;
+import org.cakeframework.internal.codegen.compiler.WarningHandler;
 
 /**
- * "Cooking" means scanning a sequence of characters and turning them into some JVM-executable artifact. For example, if
- * you cook a {@link org.cakeframework.internal.codegen.compiler.ClassBodyEvaluator}, then the tokens are interpreted as a class
- * body and compiled into a {@link Class} which is accessible through {@link IClassBodyEvaluator#getClazz()}.
+ * "Cooking" means scanning a sequence of characters and turning them into some
+ * JVM-executable artifact. For example, if you cook a {@link
+ * org.cakeframework.internal.codegen.compiler.ClassBodyEvaluator}, then the tokens are interpreted as a class body and
+ * compiled into a {@link Class} which is accessible through {@link IClassBodyEvaluator#getClazz()}.
  * <p>
- * The <code>cook*()</code> methods eventually invoke the abstract {@link #cook(String, Reader)} method.
+ * The <code>cook*()</code> methods eventually invoke the abstract {@link #cook(String, Reader)}
+ * method.
  */
-public interface ICookable {
+public
+interface ICookable {
 
     /**
      * The {@link ClassLoader} that loads this classes on the boot class path, i.e. the JARs in the JRE's "lib" and
@@ -47,20 +52,16 @@ public interface ICookable {
 
     /**
      * The "parent class loader" is used to load referenced classes. Useful values are:
-     * <table border="1">
-     * <tr>
-     * <td><code>System.getSystemClassLoader()</code></td>
-     * <td>The running JVM's class path</td>
-     * </tr>
-     * <tr>
-     * <td><code>Thread.currentThread().getContextClassLoader()</code> or <code>null</code></td>
-     * <td>The class loader effective for the invoking thread</td>
-     * </tr>
-     * <tr>
-     * <td>{@link #BOOT_CLASS_LOADER}</td>
-     * <td>The running JVM's boot class path</td>
-     * </tr>
-     * </table>
+     * <table border="1"><tr>
+     *   <td><code>System.getSystemClassLoader()</code></td>
+     *   <td>The running JVM's class path</td>
+     * </tr><tr>
+     *   <td><code>Thread.currentThread().getContextClassLoader()</code> or <code>null</code></td>
+     *   <td>The class loader effective for the invoking thread</td>
+     * </tr><tr>
+     *   <td>{@link #BOOT_CLASS_LOADER}</td>
+     *   <td>The running JVM's boot class path</td>
+     * </tr></table>
      * The parent class loader defaults to the current thread's context class loader.
      */
     void setParentClassLoader(ClassLoader optionalParentClassLoader);
@@ -68,8 +69,8 @@ public interface ICookable {
     /**
      * Value 'org.codehaus.janino.source_debugging.enable'.
      * <p>
-     * Setting this system property to 'true' enables source-level debugging. Typically, this means that compilation is
-     * executed with '-g:all' instead of '-g:none'.
+     * Setting this system property to 'true' enables source-level debugging. Typically, this means that compilation
+     * is executed with '-g:all' instead of '-g:none'.
      */
     String SYSTEM_PROPERTY_SOURCE_DEBUGGING_ENABLE = "org.codehaus.janino.source_debugging.enable";
 
@@ -77,10 +78,10 @@ public interface ICookable {
      * Value 'org.codehaus.janino.source_debugging.dir'.
      * <p>
      * If source code is not compiled from a file, debuggers have a hard time locating the source file for source-level
-     * debugging. As a workaround, a copy of the source code is written to a temporary file, which must be included in
-     * the debugger's source path. If this system property is set, the temporary source file is created in that
+     * debugging. As a workaround, a copy of the source code is written to a temporary file, which must be included
+     * in the debugger's source path. If this system property is set, the temporary source file is created in that
      * directory, otherwise in the default temporary-file directory.
-     * 
+     *
      * @see File#createTempFile(String, String, File)
      */
     String SYSTEM_PROPERTY_SOURCE_DEBUGGING_DIR = "org.codehaus.janino.source_debugging.dir";
@@ -93,78 +94,105 @@ public interface ICookable {
 
     /**
      * Reads, scans, parses and compiles Java tokens from the given {@link Reader}.
-     * 
-     * @param optionalFileName
-     *            Used when reporting errors and warnings.
+     *
+     * @param optionalFileName Used when reporting errors and warnings.
      */
     void cook(String optionalFileName, Reader r) throws CompileException, IOException;
 
-    /**
-     * Reads, scans, parses and compiles Java tokens from the given {@link Reader}.
-     */
+    /**Reads, scans, parses and compiles Java tokens from the given {@link Reader}. */
     void cook(Reader r) throws CompileException, IOException;
 
     /**
-     * Reads, scans, parses and compiles Java tokens from the given {@link InputStream}, encoded in the
-     * "platform default encoding".
+     * Reads, scans, parses and compiles Java tokens from the given {@link InputStream}, encoded
+     * in the "platform default encoding".
      */
     void cook(InputStream is) throws CompileException, IOException;
 
     /**
-     * Reads, scans, parses and compiles Java tokens from the given {@link InputStream}, encoded in the
-     * "platform default encoding".
-     * 
-     * @param optionalFileName
-     *            Used when reporting errors and warnings.
+     * Reads, scans, parses and compiles Java tokens from the given {@link InputStream}, encoded
+     * in the "platform default encoding".
+     *
+     * @param optionalFileName Used when reporting errors and warnings.
      */
     void cook(String optionalFileName, InputStream is) throws CompileException, IOException;
 
     /**
-     * Reads, scans, parses and compiles Java tokens from the given {@link InputStream} with the given
-     * <code>encoding</code>.
+     * Reads, scans, parses and compiles Java tokens from the given {@link InputStream} with the
+     * given <code>encoding</code>.
      */
     void cook(InputStream is, String optionalEncoding) throws CompileException, IOException;
 
     /**
-     * Reads, scans, parses and compiles Java tokens from the given {@link InputStream} with the given
-     * <code>encoding</code>.
-     * 
-     * @param optionalFileName
-     *            Used when reporting errors and warnings.
+     * Reads, scans, parses and compiles Java tokens from the given {@link InputStream} with the
+     * given <code>encoding</code>.
+     *
+     * @param optionalFileName Used when reporting errors and warnings.
      */
-    void cook(String optionalFileName, InputStream is, String optionalEncoding) throws CompileException, IOException;
+    void
+    cook(
+        String      optionalFileName,
+        InputStream is,
+        String      optionalEncoding
+    ) throws CompileException, IOException;
 
-    /**
-     * Reads, scans, parses and compiles Java tokens from the given {@link String}.
-     */
+    /** Reads, scans, parses and compiles Java tokens from the given {@link String}. */
     void cook(String s) throws CompileException;
 
     /**
      * Reads, scans, parses and compiles Java tokens from the given {@link String}.
-     * 
-     * @param optionalFileName
-     *            Used when reporting errors and warnings.
+     *
+     * @param optionalFileName Used when reporting errors and warnings.
      */
     void cook(String optionalFileName, String s) throws CompileException;
 
     /**
-     * Reads, scans, parses and compiles Java tokens from the given {@link File}, encoded in the
-     * "platform default encoding".
+     * Reads, scans, parses and compiles Java tokens from the given {@link File}, encoded
+     * in the "platform default encoding".
      */
     void cookFile(File file) throws CompileException, IOException;
 
     /**
-     * Reads, scans, parses and compiles Java tokens from the given {@link File} with the given <code>encoding</code>.
+     * Reads, scans, parses and compiles Java tokens from the given {@link File} with the
+     * given <code>encoding</code>.
      */
-    void cookFile(File file, String optionalEncoding) throws CompileException, IOException;
+    void
+    cookFile(File file, String optionalEncoding) throws CompileException, IOException;
 
     /**
-     * Reads, scans, parses and compiles Java tokens from the named file, encoded in the "platform default encoding".
+     * Reads, scans, parses and compiles Java tokens from the named file, encoded in the "platform
+     * default encoding".
      */
     void cookFile(String fileName) throws CompileException, IOException;
 
+    /** Reads, scans, parses and compiles Java tokens from the named file with the given {@code optionalEncoding}. */
+    void
+    cookFile(String fileName, String optionalEncoding) throws CompileException, IOException;
+
     /**
-     * Reads, scans, parses and compiles Java tokens from the named file with the given <code>encoding</code>.
+     * By default, {@link CompileException}s are thrown on compile errors, but an application my install its own
+     * {@link ErrorHandler}.
+     * <p>
+     * Be aware that a single problem during compilation often causes a bunch of compile errors, so a good {@link
+     * ErrorHandler} counts errors and throws a {@link CompileException} when a limit is reached.
+     * <p>
+     * If the given {@link ErrorHandler} throws {@link CompileException}s, then the compilation is terminated and
+     * the exception is propagated.
+     * <p>
+     * If the given {@link ErrorHandler} does not throw {@link CompileException}s, then the compiler may or may not
+     * continue compilation, but must eventually throw a {@link CompileException}.
+     * <p>
+     * In other words: The {@link ErrorHandler} may throw a {@link CompileException} or not, but the compiler must
+     * definitely throw a {@link CompileException} if one or more compile errors have occurred.
+     *
+     * @param optionalCompileErrorHandler {@code null} to restore the default behavior (throwing a {@link
+     *                                    CompileException}
      */
-    void cookFile(String fileName, String optionalEncoding) throws CompileException, IOException;
+    void setCompileErrorHandler(ErrorHandler optionalCompileErrorHandler);
+
+    /**
+     * By default, warnings are discarded, but an application my install a custom {@link WarningHandler}.
+     *
+     * @param optionalWarningHandler {@code null} to indicate that no warnings be issued
+     */
+    void setWarningHandler(WarningHandler optionalWarningHandler);
 }

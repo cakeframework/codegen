@@ -25,14 +25,20 @@
 
 package org.cakeframework.internal.codegen.compiler;
 
+import java.io.ByteArrayInputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Reader;
+import java.lang.reflect.Method;
 import java.security.AccessController;
 import java.security.PrivilegedAction;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.cakeframework.internal.codegen.compiler.Java.Type;
+import org.cakeframework.internal.codegen.compiler.Visitor.AtomVisitor;
+import org.cakeframework.internal.codegen.compiler.Visitor.TypeVisitor;
 import org.cakeframework.internal.codegen.compiler.compiler.CompileException;
 import org.cakeframework.internal.codegen.compiler.compiler.Cookable;
 import org.cakeframework.internal.codegen.compiler.compiler.ICookable;
@@ -44,40 +50,58 @@ import org.cakeframework.internal.codegen.compiler.util.ClassFile;
  * To set up a {@link SimpleCompiler} object, proceed as described for {@link ISimpleCompiler}. Alternatively, a number
  * of "convenience constructors" exist that execute the described steps instantly.
  */
+@SuppressWarnings({ "rawtypes", "unchecked" })
 public class SimpleCompiler extends Cookable implements ISimpleCompiler {
-    // private static final boolean DEBUG = false;
+    private static final boolean DEBUG = false;
+
+    private ClassLoader parentClassLoader = Thread.currentThread().getContextClassLoader();
 
     // Set when "cook()"ing.
-    private AuxiliaryClassLoader classLoader = null;
-    protected boolean debugLines = this.debugSource;
+    private ClassLoaderIClassLoader classLoaderIClassLoader;
 
-    protected boolean debugSource = Boolean.getBoolean(ICookable.SYSTEM_PROPERTY_SOURCE_DEBUGGING_ENABLE);
-    protected boolean debugVars = this.debugSource;
+    private ClassLoader result;
+    private ErrorHandler optionalCompileErrorHandler;
+    private WarningHandler optionalWarningHandler;
 
-    private IClassLoader iClassLoader = null;
+    private boolean debugSource = Boolean.getBoolean(ICookable.SYSTEM_PROPERTY_SOURCE_DEBUGGING_ENABLE);
+    private boolean debugLines = this.debugSource;
+    private boolean debugVars = this.debugSource;
 
-    private Class[] optionalAuxiliaryClasses = null;
-    private ClassLoader parentClassLoader = Thread.currentThread().getContextClassLoader();
-    private ClassLoader result = null;
+    public static void // SUPPRESS CHECKSTYLE JavadocMethod
+    main(String[] args) throws Exception {
+        if (args.length >= 1 && "-help".equals(args[0])) {
+            System.out.println("Usage:");
+            System.out.println("    org.codehaus.janino.SimpleCompiler <source-file> <class-name> { <argument> }");
+            System.out.println("Reads a compilation unit from the given <source-file> and invokes method");
+            System.out.println("\"public static void main(String[])\" of class <class-name>, passing the");
+            System.out.println("given <argument>s.");
+            System.exit(1);
+        }
 
-    public SimpleCompiler() {}
+        if (args.length < 2) {
+            System.err.println("Source file and/or class name missing; try \"-help\".");
+            System.exit(1);
+        }
 
-    /**
-     * Equivalent to
-     * 
-     * <pre>
-     * SimpleCompiler sc = new SimpleCompiler();
-     * sc.setParentClassLoader(optionalParentClassLoader);
-     * sc.cook(scanner);
-     * </pre>
-     * 
-     * @see #SimpleCompiler()
-     * @see #setParentClassLoader(ClassLoader)
-     * @see Cookable#cook(Reader)
-     */
-    public SimpleCompiler(Scanner scanner, ClassLoader optionalParentClassLoader) throws IOException, CompileException {
-        this.setParentClassLoader(optionalParentClassLoader);
-        this.cook(scanner);
+        // Get source file.
+        String sourceFileName = args[0];
+
+        // Get class name.
+        String className = args[1];
+
+        // Get arguments.
+        String[] arguments = new String[args.length - 2];
+        System.arraycopy(args, 2, arguments, 0, arguments.length);
+
+        // Compile the source file.
+        ClassLoader cl = new SimpleCompiler(sourceFileName, new FileInputStream(sourceFileName)).getClassLoader();
+
+        // Load the class.
+        Class c = cl.loadClass(className);
+
+        // Invoke the "public static main(String[])" method.
+        Method m = c.getMethod("main", new Class[] { String[].class });
+        m.invoke(null, new Object[] { arguments });
     }
 
     /**
@@ -85,14 +109,14 @@ public class SimpleCompiler extends Cookable implements ISimpleCompiler {
      * 
      * <pre>
      * SimpleCompiler sc = new SimpleCompiler();
-     * sc.cook(fileName);
+     * sc.cook(optionalFileName, in);
      * </pre>
-     * 
+     *
      * @see #SimpleCompiler()
-     * @see Cookable#cookFile(String)
+     * @see Cookable#cook(String, Reader)
      */
-    public SimpleCompiler(String fileName) throws IOException, CompileException {
-        this.cookFile(fileName);
+    public SimpleCompiler(String optionalFileName, Reader in) throws IOException, CompileException {
+        this.cook(optionalFileName, in);
     }
 
     /**
@@ -102,7 +126,7 @@ public class SimpleCompiler extends Cookable implements ISimpleCompiler {
      * SimpleCompiler sc = new SimpleCompiler();
      * sc.cook(optionalFileName, is);
      * </pre>
-     * 
+     *
      * @see #SimpleCompiler()
      * @see Cookable#cook(String, InputStream)
      */
@@ -115,123 +139,87 @@ public class SimpleCompiler extends Cookable implements ISimpleCompiler {
      * 
      * <pre>
      * SimpleCompiler sc = new SimpleCompiler();
-     * sc.cook(optionalFileName, in);
+     * sc.cook(fileName);
      * </pre>
-     * 
+     *
      * @see #SimpleCompiler()
-     * @see Cookable#cook(String, Reader)
+     * @see Cookable#cookFile(String)
      */
-    public SimpleCompiler(String optionalFileName, Reader in) throws IOException, CompileException {
-        this.cook(optionalFileName, in);
+    public SimpleCompiler(String fileName) throws IOException, CompileException {
+        this.cookFile(fileName);
     }
 
     /**
-     * Throw an {@link IllegalStateException} if this {@link Cookable} is already cooked.
-     */
-    protected void assertNotCooked() {
-        if (this.classLoader != null) {
-            throw new IllegalStateException("Already cooked");
-        }
-    }
-
-    /**
-     * Convert an array of {@link Class}es into an array of{@link Java.Type}s.
-     */
-    protected Java.Type[] classesToTypes(Location location, Class[] classes) {
-        Java.Type[] types = new Java.Type[classes.length];
-        for (int i = 0; i < classes.length; ++i) {
-            types[i] = this.classToType(location, classes[i]);
-        }
-        return types;
-    }
-
-    /**
-     * Wrap a reflection {@link Class} in a {@link Java.Type} object.
-     */
-    protected Java.Type classToType(Location location, final Class optionalClass) {
-        if (optionalClass == null) {
-            return null;
-        }
-
-        this.classLoader.addAuxiliaryClass(optionalClass);
-
-        IClass iClass;
-        try {
-            iClass = this.iClassLoader.loadIClass(Descriptor.fromClassName(optionalClass.getName()));
-        } catch (ClassNotFoundException ex) {
-            throw new JaninoRuntimeException("Loading IClass \"" + optionalClass.getName() + "\": " + ex);
-        }
-        if (iClass == null) {
-            throw new JaninoRuntimeException("Cannot load class \"" + optionalClass.getName()
-                    + "\" through the given ClassLoader");
-        }
-
-        return new Java.SimpleType(location, iClass);
-    }
-
-    /**
-     * Compile the given compilation unit. (A "compilation unit" is typically the contents of a Java&trade; source
-     * file.)
+     * Equivalent to
      * 
-     * @param compilationUnit
-     *            The parsed compilation unit
-     * @return The {@link ClassLoader} into which the compiled classes were defined
-     * @throws CompileException
+     * <pre>
+     * SimpleCompiler sc = new SimpleCompiler();
+     * sc.setParentClassLoader(optionalParentClassLoader);
+     * sc.cook(scanner);
+     * </pre>
+     *
+     * @see #SimpleCompiler()
+     * @see #setParentClassLoader(ClassLoader)
+     * @see Cookable#cook(Reader)
      */
-    protected final ClassLoader compileToClassLoader(Java.CompilationUnit compilationUnit) throws CompileException {
+    public SimpleCompiler(Scanner scanner, ClassLoader optionalParentClassLoader) throws IOException, CompileException {
+        this.setParentClassLoader(optionalParentClassLoader);
+        this.cook(scanner);
+    }
 
-        // Compile compilation unit to class files.
-        ClassFile[] classFiles = new UnitCompiler(compilationUnit, this.iClassLoader).compileUnit(this.debugSource,
-                this.debugLines, this.debugVars);
+    public SimpleCompiler() {}
 
-        // Convert the class files to bytes and store them in a Map.
-        final Map classes = new HashMap(); // String className => byte[] data
-        for (int i = 0; i < classFiles.length; ++i) {
-            ClassFile cf = classFiles[i];
-            byte[] contents = cf.toByteArray();
-            // if (DEBUG) {
-            // try {
-            // new de.unkrig.jdisasm.Disassembler().disasm(new ByteArrayInputStream(contents));
-            // } catch (IOException e) {
-            // e.printStackTrace();
-            // }
-            // }
-            classes.put(cf.getThisClassName(), contents);
-        }
+    @Override
+    public void setParentClassLoader(ClassLoader optionalParentClassLoader) {
+        this.assertNotCooked();
+        this.parentClassLoader = optionalParentClassLoader != null ? optionalParentClassLoader : Thread.currentThread()
+                .getContextClassLoader();
+    }
 
-        // Create a ClassLoader that loads the generated classes.
-        this.result = (ClassLoader) AccessController.doPrivileged(new PrivilegedAction() {
-            public Object run() {
-                return new ByteArrayClassLoader(classes, // classes
-                        SimpleCompiler.this.classLoader // parent
-                );
-            }
-        });
-        return this.result;
+    @Override
+    public void setDebuggingInformation(boolean debugSource, boolean debugLines, boolean debugVars) {
+        this.debugSource = debugSource;
+        this.debugLines = debugLines;
+        this.debugVars = debugVars;
     }
 
     /**
-     * Cook this compilation unit directly. See {@link Cookable#cook}
+     * Scans, parses and compiles a given compilation unit from the given {@link Reader}. After completion,
+     * {@link #getClassLoader()} returns a {@link ClassLoader} that allows for access to the compiled classes.
      */
-    public void cook(Java.CompilationUnit compilationUnit) throws CompileException {
-        this.setUpClassLoaders();
-
-        // Compile the classes and load them.
-        this.compileToClassLoader(compilationUnit);
-    }
-
-    public void cook(Scanner scanner) throws CompileException, IOException {
-        this.setUpClassLoaders();
-
-        // Parse the compilation unit.
-        Java.CompilationUnit compilationUnit = new Parser(scanner).parseCompilationUnit();
-
-        // Compile the classes and load them.
-        this.compileToClassLoader(compilationUnit);
-    }
-
+    @Override
     public final void cook(String optionalFileName, Reader r) throws CompileException, IOException {
         this.cook(new Scanner(optionalFileName, r));
+    }
+
+    /**
+     * Scans, parses and ompiles a given compilation unit from the given scanner. After completion,
+     * {@link #getClassLoader()} returns a {@link ClassLoader} that allows for access to the compiled classes.
+     */
+    public void cook(Scanner scanner) throws CompileException, IOException {
+        this.compileToClassLoader(new Parser(scanner).parseCompilationUnit());
+    }
+
+    /**
+     * Cooks this compilation unit directly.
+     *
+     * @see Cookable#cook(Reader)
+     */
+    public void cook(Java.CompilationUnit compilationUnit) throws CompileException {
+
+        // Compile the classes and load them.
+        this.compileToClassLoader(compilationUnit);
+    }
+
+    @Override
+    public ClassLoader getClassLoader() {
+        if (this.getClass() != SimpleCompiler.class) {
+            throw new IllegalStateException("Must not be called on derived instances");
+        }
+        if (this.result == null) {
+            throw new IllegalStateException("Must only be called after \"cook()\"");
+        }
+        return this.result;
     }
 
     /**
@@ -241,6 +229,7 @@ public class SimpleCompiler extends Cookable implements ISimpleCompiler {
      * <li>Both generated functionally equal classes as seen by {@link ByteArrayClassLoader#equals(Object)}
      * </ul>
      */
+    @Override
     public boolean equals(Object o) {
         if (!(o instanceof SimpleCompiler)) {
             return false;
@@ -255,140 +244,162 @@ public class SimpleCompiler extends Cookable implements ISimpleCompiler {
         return this.result.equals(that.result);
     }
 
-    public ClassLoader getClassLoader() {
-        if (this.getClass() != SimpleCompiler.class) {
-            throw new IllegalStateException("Must not be called on derived instances");
+    @Override
+    public int hashCode() {
+        return this.parentClassLoader.hashCode();
+    }
+
+    @Override
+    public void setCompileErrorHandler(ErrorHandler optionalCompileErrorHandler) {
+        this.optionalCompileErrorHandler = optionalCompileErrorHandler;
+    }
+
+    @Override
+    public void setWarningHandler(WarningHandler optionalWarningHandler) {
+        this.optionalWarningHandler = optionalWarningHandler;
+    }
+
+    /** Wraps a reflection {@link Class} in a {@link Java.Type} object. */
+    protected Java.Type classToType(final Location location, final Class clazz) {
+        if (clazz == null) {
+            return null;
         }
-        if (this.result == null) {
-            throw new IllegalStateException("Must only be called after \"cook()\"");
+
+        // IClass iClass;
+        // synchronized (this.classes) {
+        // iClass = (IClass) this.classes.get(clazz);
+        // if (iClass == null) {
+        // if (clazz.isPrimitive()) {
+        // if (clazz == byte.class) { iClass = IClass.BYTE; } else
+        // if (clazz == short.class) { iClass = IClass.SHORT; } else
+        // if (clazz == int.class) { iClass = IClass.INT; } else
+        // if (clazz == long.class) { iClass = IClass.LONG; } else
+        // if (clazz == float.class) { iClass = IClass.FLOAT; } else
+        // if (clazz == double.class) { iClass = IClass.DOUBLE; } else
+        // if (clazz == char.class) { iClass = IClass.CHAR; } else
+        // if (clazz == boolean.class) { iClass = IClass.BOOLEAN; } else
+        // if (clazz == void.class) { iClass = IClass.VOID; } else
+        // { throw new AssertionError(clazz); }
+        // } else {
+        // iClass = new ReflectionIClass(clazz, null);
+        // }
+        // this.classes.put(clazz, iClass);
+        // }
+        // }
+        // return new Java.SimpleType(location, iClass);
+
+        // Can't use a SimpleType here because the classLoaderIClassLoader is not yet set up. Instead, create a
+        // Type that lazily creates a delegate Type at COMPILE TIME.
+        return new Java.Type(location) {
+
+            private Java.SimpleType delegate;
+
+            @Override
+            public String toString() {
+                return this.getDelegate().toString();
+            }
+
+            @Override
+            public void accept(AtomVisitor visitor) {
+                this.getDelegate().accept((TypeVisitor) visitor);
+            }
+
+            @Override
+            public void accept(TypeVisitor visitor) {
+                this.getDelegate().accept(visitor);
+            }
+
+            private Type getDelegate() {
+                if (this.delegate == null) {
+                    IClass iClass;
+                    try {
+                        iClass = SimpleCompiler.this.classLoaderIClassLoader.loadIClass(Descriptor.fromClassName(clazz
+                                .getName()));
+                    } catch (ClassNotFoundException ex) {
+                        throw new JaninoRuntimeException("Loading IClass \"" + clazz.getName() + "\": " + ex);
+                    }
+                    if (iClass == null) {
+                        throw new JaninoRuntimeException("Cannot load class '" + clazz.getName()
+                                + "' through the parent loader");
+                    }
+                    if (!clazz.isPrimitive() && ((ReflectionIClass) iClass).getClazz() != clazz) {
+                        throw new JaninoRuntimeException("Class '" + clazz.getName()
+                                + "' was loaded through a different loader");
+                    }
+                    this.delegate = new Java.SimpleType(location, iClass);
+                }
+
+                return this.delegate;
+            }
+        };
+    }
+
+    // private final Map<Class, IClass> classes = new HashMap();
+
+    /** Converts an array of {@link Class}es into an array of{@link Java.Type}s. */
+    protected Java.Type[] classesToTypes(Location location, Class[] classes) {
+        Java.Type[] types = new Java.Type[classes.length];
+        for (int i = 0; i < classes.length; ++i) {
+            types[i] = this.classToType(location, classes[i]);
         }
+        return types;
+    }
+
+    /**
+     * Compile the given compilation unit. (A "compilation unit" is typically the contents of a Java&trade; source
+     * file.)
+     *
+     * @param compilationUnit
+     *            The parsed compilation unit
+     * @return The {@link ClassLoader} into which the compiled classes were defined
+     * @throws CompileException
+     */
+    protected final ClassLoader compileToClassLoader(Java.CompilationUnit compilationUnit) throws CompileException {
+
+        this.classLoaderIClassLoader = new ClassLoaderIClassLoader(this.parentClassLoader);
+
+        // Compile compilation unit to class files.
+        UnitCompiler unitCompiler = new UnitCompiler(compilationUnit, this.classLoaderIClassLoader);
+        unitCompiler.setCompileErrorHandler(this.optionalCompileErrorHandler);
+        unitCompiler.setWarningHandler(this.optionalWarningHandler);
+        ClassFile[] classFiles = unitCompiler.compileUnit(this.debugSource, this.debugLines, this.debugVars);
+
+        // Convert the class files to bytes and store them in a Map.
+        final Map<String /* className */, byte[] /* bytecode */> classes = new HashMap();
+        for (ClassFile cf : classFiles) {
+            byte[] contents = cf.toByteArray();
+            if (DEBUG) {
+                try {
+                    Class disassemblerClass = Class.forName("de.unkrig.jdisasm.Disassembler");
+                    disassemblerClass.getMethod("disasm", new Class[] { InputStream.class }).invoke(
+                            disassemblerClass.newInstance(), new Object[] { new ByteArrayInputStream(contents) });
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+            classes.put(cf.getThisClassName(), contents);
+        }
+
+        // Create a ClassLoader that loads the generated classes.
+        this.result = (ClassLoader) AccessController.doPrivileged(new PrivilegedAction() {
+
+            @Override
+            public Object run() {
+                return new ByteArrayClassLoader(classes, // classes
+                        SimpleCompiler.this.parentClassLoader // parent
+                        );
+            }
+        });
         return this.result;
     }
 
-    public int hashCode() {
-        return this.classLoader.hashCode();
-    }
-
-    public void setDebuggingInformation(boolean debugSource, boolean debugLines, boolean debugVars) {
-        this.debugSource = debugSource;
-        this.debugLines = debugLines;
-        this.debugVars = debugVars;
-    }
-
-    public void setParentClassLoader(ClassLoader optionalParentClassLoader) {
-        this.setParentClassLoader(optionalParentClassLoader, null);
-    }
-
     /**
-     * Allow references to the classes loaded through this parent class loader (@see
-     * {@link #setParentClassLoader(ClassLoader)}), plus the extra <code>auxiliaryClasses</code>.
-     * <p>
-     * Notice that the <code>auxiliaryClasses</code> must either be loadable through the
-     * <code>optionalParentClassLoader</code> (in which case they have no effect), or <b>no class with the same name</b>
-     * must be loadable through the <code>optionalParentClassLoader</code>.
+     * @throws IllegalStateException
+     *             This {@link Cookable} is already cooked
      */
-    public void setParentClassLoader(ClassLoader optionalParentClassLoader, Class[] auxiliaryClasses) {
-        assertNotCooked();
-        this.parentClassLoader = optionalParentClassLoader != null ? optionalParentClassLoader : Thread.currentThread()
-                .getContextClassLoader();
-        this.optionalAuxiliaryClasses = auxiliaryClasses;
-    }
-
-    /**
-     * Initializes {@link #classLoader} and {@link #iClassLoader} from the configured {@link #parentClassLoader} and
-     * {@link #optionalAuxiliaryClasses}. These are needed by {@link #classToType(Location, Class)} and friends which
-     * are used when creating the AST.
-     */
-    protected final void setUpClassLoaders() {
-        assertNotCooked();
-
-        // Set up the ClassLoader for the compilation and the loading.
-        this.classLoader = (AuxiliaryClassLoader) AccessController.doPrivileged(new PrivilegedAction() {
-            public Object run() {
-                return new AuxiliaryClassLoader(SimpleCompiler.this.parentClassLoader);
-            }
-        });
-        if (this.optionalAuxiliaryClasses != null) {
-            for (int i = 0; i < this.optionalAuxiliaryClasses.length; ++i) {
-                this.classLoader.addAuxiliaryClass(this.optionalAuxiliaryClasses[i]);
-            }
-        }
-
-        this.iClassLoader = new ClassLoaderIClassLoader(this.classLoader);
-    }
-
-    /**
-     * A {@link ClassLoader} that intermixes that classes loaded by its parent with a map of "auxiliary classes".
-     */
-    private static final class AuxiliaryClassLoader extends ClassLoader {
-        private final Map auxiliaryClasses = new HashMap(); // String name => Class
-
-        private AuxiliaryClassLoader(ClassLoader parent) {
-            super(parent);
-        }
-
-        private void addAuxiliaryClass(Class c) {
-            if (this.auxiliaryClasses.containsKey(c.getName())) {
-                return;
-            }
-
-            // Check whether the auxiliary class is conflicting with this ClassLoader.
-            try {
-                Class c2 = super.loadClass(c.getName(), false);
-                if (c2 != c) {
-                    throw new JaninoRuntimeException("Trying to add an auxiliary class \"" + c.getName()
-                            + "\" while another class with the same name is already loaded");
-                }
-            } catch (ClassNotFoundException ex) {
-                ;
-            }
-
-            this.auxiliaryClasses.put(c.getName(), c);
-
-            {
-                Class sc = c.getSuperclass();
-                if (sc != null) {
-                    this.addAuxiliaryClass(sc);
-                }
-            }
-
-            {
-                Class[] ifs = c.getInterfaces();
-                for (int i = 0; i < ifs.length; ++i) {
-                    this.addAuxiliaryClass(ifs[i]);
-                }
-            }
-        }
-
-        public boolean equals(Object o) {
-            if (!(o instanceof AuxiliaryClassLoader)) {
-                return false;
-            }
-            AuxiliaryClassLoader that = (AuxiliaryClassLoader) o;
-
-            {
-                final ClassLoader parentOfThis = this.getParent();
-                final ClassLoader parentOfThat = that.getParent();
-                if (parentOfThis == null ? parentOfThat != null : !parentOfThis.equals(parentOfThat)) {
-                    return false;
-                }
-            }
-
-            return this.auxiliaryClasses.equals(that.auxiliaryClasses);
-        }
-
-        public int hashCode() {
-            ClassLoader parent = this.getParent();
-            return (parent == null ? 0 : parent.hashCode()) ^ this.auxiliaryClasses.hashCode();
-        }
-
-        protected Class loadClass(String name, boolean resolve) throws ClassNotFoundException {
-            Class c = (Class) this.auxiliaryClasses.get(name);
-            if (c != null) {
-                return c;
-            }
-
-            return super.loadClass(name, resolve);
+    protected void assertNotCooked() {
+        if (this.classLoaderIClassLoader != null) {
+            throw new IllegalStateException("Already cooked");
         }
     }
 }

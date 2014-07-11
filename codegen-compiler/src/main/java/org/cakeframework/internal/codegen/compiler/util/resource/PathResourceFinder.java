@@ -1,3 +1,4 @@
+
 /*
  * Janino - An embedded Java[TM] compiler
  *
@@ -25,123 +26,94 @@
 
 package org.cakeframework.internal.codegen.compiler.util.resource;
 
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
-import java.util.zip.ZipFile;
+import java.io.*;
+import java.util.*;
+import java.util.zip.*;
 
-import org.cakeframework.internal.codegen.compiler.util.iterator.TransformingIterator;
+import org.cakeframework.internal.codegen.compiler.util.iterator.*;
+
 
 /**
  * A {@link org.cakeframework.internal.codegen.compiler.util.resource.ResourceFinder} that finds its resources along a "path"
  * consisting of JAR file names, ZIP file names, and directory names.
- * 
  * @see org.cakeframework.internal.codegen.compiler.util.resource.ZipFileResourceFinder
  * @see org.cakeframework.internal.codegen.compiler.util.resource.DirectoryResourceFinder
  */
-public class PathResourceFinder extends LazyMultiResourceFinder {
+@SuppressWarnings({ "rawtypes", "unchecked" }) public
+class PathResourceFinder extends LazyMultiResourceFinder {
 
-    /**
-     * @param entries
-     *            The entries of the "path"
-     */
-    public PathResourceFinder(final File[] entries) {
+    /** @param entries The entries of the "path" */
+    public
+    PathResourceFinder(final File[] entries) {
         super(PathResourceFinder.createIterator(Arrays.asList(entries).iterator()));
     }
 
-    /**
-     * @param entries
-     *            The entries of the "path" (type must be {@link File})
-     */
-    public PathResourceFinder(Iterator entries) {
-        super(entries);
-    }
+    /** @param entries The entries of the "path" (type must be {@link File}) */
+    public
+    PathResourceFinder(Iterator<ResourceFinder> entries) { super(entries); }
 
-    /**
-     * @param path
-     *            A java-like path, i.e. a "path separator"-separated list of entries.
-     */
-    public PathResourceFinder(String path) {
-        this(PathResourceFinder.parsePath(path));
-    }
+    /** @param path A java-like path, i.e. a "path separator"-separated list of entries. */
+    public
+    PathResourceFinder(String path) { this(PathResourceFinder.parsePath(path)); }
 
-    private static Iterator createIterator(final Iterator entries) {
-        return new TransformingIterator(entries) {
-            protected Object transform(Object o) {
-                return PathResourceFinder.createResourceFinder((File) o);
-            }
+    private static Iterator<ResourceFinder>
+    createIterator(final Iterator<File> entries) {
+        return new TransformingIterator/*<File, ResourceFinder>*/(entries) {
+            @Override protected Object transform(Object o) { return PathResourceFinder.createResourceFinder((File) o); }
         };
     }
 
     /**
-     * Break a given string up by the system-dependent path-separator character (on UNIX systems, this character is ':';
-     * on Microsoft Windows systems it is ';'). Empty components are ignored.
+     * Break a given string up by the system-dependent path-separator character (on UNIX systems,
+     * this character is ':'; on Microsoft Windows systems it is ';'). Empty components are
+     * ignored.
      * <p>
      * UNIX Examples:
      * <dl>
-     * <dt>A:B:C
-     * <dd>A, B, C
-     * <dt>::B:
-     * <dd>B
-     * <dt>:A
-     * <dd>A
-     * <dt>(Empty string)
-     * <dd>(Zero components)
+     *   <dt>A:B:C          <dd>A, B, C
+     *   <dt>::B:           <dd>B
+     *   <dt>:A             <dd>A
+     *   <dt>(Empty string) <dd>(Zero components)
      * </dl>
-     * 
+     *
      * @see File#pathSeparatorChar
      */
-    public static File[] parsePath(String s) {
-        int from = 0;
-        List l = new ArrayList(); // File
+    public static File[]
+    parsePath(String s) {
+        int        from = 0;
+        List<File> l    = new ArrayList();
         for (;;) {
             int to = s.indexOf(File.pathSeparatorChar, from);
             if (to == -1) {
-                if (from != s.length())
-                    l.add(new File(s.substring(from)));
+                if (from != s.length()) l.add(new File(s.substring(from)));
                 break;
             }
-            if (to != from)
-                l.add(new File(s.substring(from, to)));
+            if (to != from) l.add(new File(s.substring(from, to)));
             from = to + 1;
         }
         return (File[]) l.toArray(new File[l.size()]);
     }
 
     /**
-     * A factory method that creates a Java classpath-style ResourceFinder as follows:
+     * A factory method that creates a Java classpath-style ResourceFinder as
+     * follows:
      * <table>
-     * <tr>
-     * <th><code>entry</code></th>
-     * <th>Returned {@link ResourceFinder}</th>
-     * </tr>
-     * <tr>
-     * <td>"*.jar" file</td>
-     * <td>{@link ZipFileResourceFinder}</td>
-     * </tr>
-     * <tr>
-     * <td>"*.zip" file</td>
-     * <td>{@link ZipFileResourceFinder}</td>
-     * </tr>
-     * <tr>
-     * <td>directory</td>
-     * <td>{@link DirectoryResourceFinder}</td>
-     * </tr>
-     * <tr>
-     * <td>any other</td>
-     * <td>A {@link ResourceFinder} that never finds a resource</td>
-     * </tr>
+     *   <tr><th><code>entry</code></th><th>Returned {@link ResourceFinder}</th></tr>
+     *   <tr><td>"*.jar" file</td><td>{@link ZipFileResourceFinder}</td></tr>
+     *   <tr><td>"*.zip" file</td><td>{@link ZipFileResourceFinder}</td></tr>
+     *   <tr><td>directory</td><td>{@link DirectoryResourceFinder}</td></tr>
+     *   <tr><td>any other</td><td>A {@link ResourceFinder} that never finds a resource</td></tr>
      * </table>
-     * 
      * @return a valid {@link ResourceFinder}
      */
-    private static ResourceFinder createResourceFinder(final File entry) {
+    private static ResourceFinder
+    createResourceFinder(final File entry) {
 
         // ZIP file or JAR file.
-        if ((entry.getName().endsWith(".jar") || entry.getName().endsWith(".zip")) && entry.isFile()) {
+        if (
+            (entry.getName().endsWith(".jar") || entry.getName().endsWith(".zip"))
+            && entry.isFile()
+        ) {
             try {
                 return new ZipFileResourceFinder(new ZipFile(entry));
             } catch (IOException e) {

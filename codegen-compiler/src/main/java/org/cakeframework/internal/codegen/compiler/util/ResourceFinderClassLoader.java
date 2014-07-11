@@ -1,3 +1,4 @@
+
 /*
  * Janino - An embedded Java[TM] compiler
  *
@@ -33,40 +34,43 @@ import org.cakeframework.internal.codegen.compiler.JaninoRuntimeException;
 import org.cakeframework.internal.codegen.compiler.util.resource.Resource;
 import org.cakeframework.internal.codegen.compiler.util.resource.ResourceFinder;
 
+
 /**
- * A {@link ClassLoader} that uses a {@link org.cakeframework.internal.codegen.compiler.util.resource.ResourceFinder} to find
- * ".class" files.
+ * A {@link ClassLoader} that uses a {@link org.cakeframework.internal.codegen.compiler.util.resource.ResourceFinder} to find ".class" files.
  */
-public class ResourceFinderClassLoader extends ClassLoader {
+@SuppressWarnings({ "rawtypes", "unchecked" }) public
+class ResourceFinderClassLoader extends ClassLoader {
 
     private final ResourceFinder resourceFinder;
 
-    public ResourceFinderClassLoader(ResourceFinder resourceFinder, ClassLoader parent) {
+    public
+    ResourceFinderClassLoader(ResourceFinder resourceFinder, ClassLoader parent) {
         super(parent);
         this.resourceFinder = resourceFinder;
     }
 
-    public ResourceFinder getResourceFinder() {
-        return this.resourceFinder;
-    }
+    /** @return The underlying {@link ResourceFinder} */
+    public ResourceFinder
+    getResourceFinder() { return this.resourceFinder; }
 
-    /**
-     * @throws ClassNotFoundException
-     */
-    protected Class findClass(String className) throws ClassNotFoundException {
+    @Override protected Class
+    findClass(String className) throws ClassNotFoundException {
 
         // Find the resource containing the class bytecode.
         Resource classFileResource = this.resourceFinder.findResource(ClassFile.getClassFileResourceName(className));
-        if (classFileResource == null)
-            throw new ClassNotFoundException(className);
+        if (classFileResource == null) throw new ClassNotFoundException(className);
 
         // Open the class file resource.
         InputStream is;
         try {
             is = classFileResource.open();
         } catch (IOException ex) {
-            throw new JaninoRuntimeException("Opening class file resource \"" + classFileResource.getFileName()
-                    + "\": " + ex.getMessage());
+            throw new JaninoRuntimeException((
+                "Opening class file resource \""
+                + classFileResource.getFileName()
+                + "\": "
+                + ex.getMessage()
+            ), ex);
         }
 
         // Read bytecode from the resource into a byte array.
@@ -75,16 +79,13 @@ public class ResourceFinderClassLoader extends ClassLoader {
             byte[] buffer = new byte[4096];
             for (;;) {
                 int bytesRead = is.read(buffer);
-                if (bytesRead == -1)
-                    break;
+                if (bytesRead == -1) break;
                 baos.write(buffer, 0, bytesRead);
             }
         } catch (IOException ex) {
             throw new ClassNotFoundException("Reading class file from \"" + classFileResource + "\"", ex);
         } finally {
-            try {
-                is.close();
-            } catch (IOException ex) {}
+            try { is.close(); } catch (IOException ex) {}
         }
         byte[] ba = baos.toByteArray();
 

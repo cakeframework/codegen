@@ -1,3 +1,4 @@
+
 /*
  * Janino - An embedded Java[TM] compiler
  *
@@ -31,39 +32,38 @@ import java.util.NoSuchElementException;
 import org.cakeframework.internal.codegen.compiler.util.Producer;
 
 /**
- * An {@link java.util.Iterator} that iterates over all the objects produced by a delegate
- * {@link org.cakeframework.internal.codegen.compiler.util.Producer}.
- * 
- * @see org.cakeframework.internal.codegen.compiler.util.Producer
+ * An {@link Iterator} that iterates over all the objects produced by a delegate {@link Producer}.
+ *
+ * @param <T> The type of the products and the iterator elements
+ * @see       Producer
  */
-public class ProducerIterator implements Iterator {
-    private final Producer producer;
+public
+class ProducerIterator<T> implements Iterator<T> {
 
-    private static final Object UNKNOWN = new Object();
-    private static final Object AT_END = null;
-    private Object nextElement = UNKNOWN;
+    private final Producer<T> producer;
 
-    public ProducerIterator(Producer producer) {
-        this.producer = producer;
-    }
+    private static final Object UNKNOWN     = new Object();
+    private static final Object AT_END      = null;
+    private Object              nextElement = UNKNOWN;
 
-    public boolean hasNext() {
-        if (this.nextElement == UNKNOWN)
-            this.nextElement = this.producer.produce();
+    public
+    ProducerIterator(Producer<T> producer) { this.producer = producer; }
+
+    @Override public boolean
+    hasNext() {
+        if (this.nextElement == UNKNOWN) this.nextElement = this.producer.produce();
         return this.nextElement != AT_END;
     }
 
-    public Object next() {
-        if (this.nextElement == UNKNOWN)
-            this.nextElement = this.producer.produce();
-        if (this.nextElement == AT_END)
-            throw new NoSuchElementException();
-        Object result = this.nextElement;
+    @Override public T
+    next() {
+        if (this.nextElement == UNKNOWN) this.nextElement = this.producer.produce();
+        if (this.nextElement == AT_END) throw new NoSuchElementException();
+        @SuppressWarnings("unchecked") T result = (T) this.nextElement;
         this.nextElement = UNKNOWN;
         return result;
     }
 
-    public void remove() {
-        throw new UnsupportedOperationException("remove");
-    }
+    @Override public void
+    remove() { throw new UnsupportedOperationException("remove"); }
 }

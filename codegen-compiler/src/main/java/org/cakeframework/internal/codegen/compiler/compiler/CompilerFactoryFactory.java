@@ -1,3 +1,4 @@
+
 /*
  * Janino - An embedded Java[TM] compiler
  *
@@ -32,30 +33,32 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.Properties;
 
-/**
- * Utility class that finds implementations of {@link ICompilerFactory}s.
- */
-public final class CompilerFactoryFactory {
+/** Utility class that finds implementations of {@link ICompilerFactory}s. */
+@SuppressWarnings({ "rawtypes", "unchecked" }) public final
+class CompilerFactoryFactory {
+
     private CompilerFactoryFactory() {}
 
-    private static ICompilerFactory defaultCompilerFactory = null;
+    private static ICompilerFactory defaultCompilerFactory;
 
     /**
      * Finds the first implementation of <code>org.codehaus.commons.compiler</code> on the class path, then loads and
      * instantiates its {@link ICompilerFactory}.
-     * 
-     * @return The {@link ICompilerFactory} of the first implementation on the class path
-     * @throws Exception
-     *             Many things can go wrong while finding and initializing the default compiler factory
+     *
+     * @return           The {@link ICompilerFactory} of the first implementation on the class path
+     * @throws Exception Many things can go wrong while finding and initializing the default compiler factory
      */
-    public static ICompilerFactory getDefaultCompilerFactory() throws Exception {
+    public static ICompilerFactory
+    getDefaultCompilerFactory() throws Exception {
         if (defaultCompilerFactory == null) {
-            Properties properties = new Properties();
-            InputStream is = Thread.currentThread().getContextClassLoader()
-                    .getResourceAsStream("org.codehaus.commons.compiler.properties");
+            Properties  properties = new Properties();
+            InputStream is         = Thread.currentThread().getContextClassLoader().getResourceAsStream(
+                "org.codehaus.commons.compiler.properties"
+            );
             if (is == null) {
                 throw new ClassNotFoundException(
-                        "No implementation of org.codehaus.commons.compiler is on the class path");
+                    "No implementation of org.codehaus.commons.compiler is on the class path"
+                );
             }
             try {
                 properties.load(is);
@@ -71,14 +74,14 @@ public final class CompilerFactoryFactory {
     /**
      * Finds all implementation of <code>org.codehaus.commons.compiler</code> on the class path, then loads and
      * instantiates their {@link ICompilerFactory}s.
-     * 
-     * @return The {@link ICompilerFactory}s of all implementations on the class path
-     * @throws Exception
-     *             Many things can go wrong while finding and initializing compiler factories
+     *
+     * @return           The {@link ICompilerFactory}s of all implementations on the class path
+     * @throws Exception Many things can go wrong while finding and initializing compiler factories
      */
-    public static ICompilerFactory[] getAllCompilerFactories() throws Exception {
-        ClassLoader cl = Thread.currentThread().getContextClassLoader();
-        List/* <IConpilerFactory> */factories = new ArrayList();
+    public static ICompilerFactory[]
+    getAllCompilerFactories() throws Exception {
+        ClassLoader            cl        = Thread.currentThread().getContextClassLoader();
+        List<ICompilerFactory> factories = new ArrayList();
         for (Enumeration en = cl.getResources("org.codehaus.commons.compiler.properties"); en.hasMoreElements();) {
             URL url = (URL) en.nextElement();
 
@@ -105,21 +108,21 @@ public final class CompilerFactoryFactory {
 
     /**
      * Loads an {@link ICompilerFactory} by class name.
-     * 
-     * @param compilerFactoryClassName
-     *            Name of a class that implements {@link ICompilerFactory}
-     * @throws Exception
-     *             Many things can go wrong while loading and initializing the default compiler factory
+     *
+     * @param compilerFactoryClassName Name of a class that implements {@link ICompilerFactory}
+     * @throws Exception               Many things can go wrong while loading and initializing the default compiler
+     *                                 factory
      */
-    public static ICompilerFactory getCompilerFactory(String compilerFactoryClassName) throws Exception {
-        return (ICompilerFactory) Thread.currentThread().getContextClassLoader().loadClass(compilerFactoryClassName)
-                .newInstance();
+    public static ICompilerFactory
+    getCompilerFactory(String compilerFactoryClassName) throws Exception {
+        return (ICompilerFactory) Thread.currentThread().getContextClassLoader().loadClass(
+            compilerFactoryClassName
+        ).newInstance();
     }
 
-    /**
-     * @return The version of the commons-compiler specification, or <code>null</code>
-     */
-    public static String getSpecificationVersion() {
+    /** @return The version of the commons-compiler specification, or <code>null</code> */
+    public static String
+    getSpecificationVersion() {
         return CompilerFactoryFactory.class.getPackage().getSpecificationVersion();
     }
 }

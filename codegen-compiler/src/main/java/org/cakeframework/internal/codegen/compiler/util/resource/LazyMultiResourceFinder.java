@@ -1,3 +1,4 @@
+
 /*
  * Janino - An embedded Java[TM] compiler
  *
@@ -25,23 +26,23 @@
 
 package org.cakeframework.internal.codegen.compiler.util.resource;
 
-import java.util.Iterator;
+import java.util.*;
 
 import org.cakeframework.internal.codegen.compiler.util.iterator.IteratorCollection;
 
-/**
- * A {@link org.cakeframework.internal.codegen.compiler.util.resource.ResourceFinder} that examines a set of
- * {@link org.cakeframework.internal.codegen.compiler.util.resource.ResourceFinder}s lazily as it searches for resources.
- * 
- * @see org.cakeframework.internal.codegen.compiler.util.iterator.IteratorCollection
- */
-public class LazyMultiResourceFinder extends MultiResourceFinder {
 
-    /**
-     * @param resourceFinders
-     *            delegate {@link ResourceFinder}s
-     */
-    public LazyMultiResourceFinder(Iterator resourceFinders) {
+/**
+ * A {@link org.cakeframework.internal.codegen.compiler.util.resource.ResourceFinder} that examines a set of {@link
+ * org.cakeframework.internal.codegen.compiler.util.resource.ResourceFinder}s lazily as it searches for resources.
+ *
+ * @see IteratorCollection
+ */
+@SuppressWarnings("unchecked") public
+class LazyMultiResourceFinder extends MultiResourceFinder {
+
+    /** @param resourceFinders delegate {@link ResourceFinder}s */
+    @SuppressWarnings("rawtypes") public
+    LazyMultiResourceFinder(Iterator<ResourceFinder> resourceFinders) {
         super(new IteratorCollection(resourceFinders));
     }
 }

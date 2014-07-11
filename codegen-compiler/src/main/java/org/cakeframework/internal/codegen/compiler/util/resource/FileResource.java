@@ -1,3 +1,4 @@
+
 /*
  * Janino - An embedded Java[TM] compiler
  *
@@ -25,39 +26,22 @@
 
 package org.cakeframework.internal.codegen.compiler.util.resource;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 
-/**
- * Representation of a resource that is a {@link java.io.File}.
- */
-public class FileResource implements Resource {
-    public FileResource(File file) {
-        this.file = file;
-    }
+/** Representation of a resource that is a {@link java.io.File}. */
+public
+class FileResource implements Resource {
+    public FileResource(File file) { this.file = file; }
 
     // Implement "Resource".
-    public final String getFileName() {
-        return this.file.toString();
-    }
+    @Override public final String      getFileName()             { return this.file.toString(); }
+    @Override public final InputStream open() throws IOException { return new FileInputStream(this.file); }
+    @Override public final long        lastModified()            { return this.file.lastModified(); }
 
-    public final InputStream open() throws IOException {
-        return new FileInputStream(this.file);
-    }
+    /** @return The file containing the contents of this resource */
+    public final File getFile() { return this.file; }
 
-    public final long lastModified() {
-        return this.file.lastModified();
-    }
-
-    public final File getFile() {
-        return this.file;
-    }
-
-    public final String toString() {
-        return this.getFileName();
-    }
+    @Override public final String toString() { return this.getFileName(); }
 
     private final File file;
 }

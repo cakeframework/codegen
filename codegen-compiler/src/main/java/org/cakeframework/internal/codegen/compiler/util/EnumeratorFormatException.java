@@ -1,3 +1,4 @@
+
 /*
  * Janino - An embedded Java[TM] compiler
  *
@@ -25,13 +26,10 @@
 
 package org.cakeframework.internal.codegen.compiler.util;
 
-/**
- * Represents a problem related to parsing {@link Enumerator}s.
- */
-public class EnumeratorFormatException extends Exception {
-    public EnumeratorFormatException() {}
+/** Represents a problem related to parsing {@link Enumerator}s. */
+public
+class EnumeratorFormatException extends Exception {
 
-    public EnumeratorFormatException(String message) {
-        super(message);
-    }
+    public EnumeratorFormatException()               {}
+    public EnumeratorFormatException(String message) { super(message); }
 }

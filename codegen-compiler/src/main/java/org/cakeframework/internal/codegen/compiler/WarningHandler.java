@@ -1,3 +1,4 @@
+
 /*
  * Janino - An embedded Java[TM] compiler
  *
@@ -25,11 +26,17 @@
 
 package org.cakeframework.internal.codegen.compiler;
 
+import org.cakeframework.internal.codegen.compiler.compiler.CompileException;
 import org.cakeframework.internal.codegen.compiler.compiler.Location;
 
-/**
- * Interface type for {@link UnitCompiler#setWarningHandler(WarningHandler)}.
- */
-public interface WarningHandler {
-    void handleWarning(String handle, String message, Location optionalLocation);
+/** Processes a warning issued by the compiler. */
+public
+interface WarningHandler {
+
+    /**
+     * May or may not choose to throw a {@link CompileException}.
+     *
+     * @param handle A string describing the category of the warning
+     */
+    void handleWarning(String handle, String message, Location optionalLocation) throws CompileException;
 }

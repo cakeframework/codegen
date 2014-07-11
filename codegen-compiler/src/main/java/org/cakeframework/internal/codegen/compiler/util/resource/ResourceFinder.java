@@ -1,3 +1,4 @@
+
 /*
  * Janino - An embedded Java[TM] compiler
  *
@@ -25,56 +26,47 @@
 
 package org.cakeframework.internal.codegen.compiler.util.resource;
 
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 
 /**
  * Finds a resource by name.
  * <p>
- * Notice that there is a symmetrical concept {@link org.cakeframework.internal.codegen.compiler.util.resource.ResourceCreator}
- * that creates resources for writing.
- * 
+ * Notice that there is a symmetrical concept
+ * {@link org.cakeframework.internal.codegen.compiler.util.resource.ResourceCreator} that creates resources for
+ * writing.
+ *
  * @see org.cakeframework.internal.codegen.compiler.util.resource.ResourceCreator
  */
-public abstract class ResourceFinder {
+public abstract
+class ResourceFinder {
 
     /**
      * Find a resource by name and open it for reading.
-     * 
-     * @param resourceName
-     *            Designates the resource; typically structured by slashes ("/") like "
-     *            <code>com/foo/pkg/Bar.class</code>"
-     * @return <code>null</code> if the resource could not be found
-     * @throws IOException
-     *             The resource was found, but there are problems opening it
+     *
+     * @param resourceName Designates the resource; typically structured by slashes ("/") like
+     *                     "<code>com/foo/pkg/Bar.class</code>"
+     * @return             <code>null</code> if the resource could not be found
+     * @throws IOException The resource was found, but there are problems opening it
      */
-    public final InputStream findResourceAsStream(String resourceName) throws IOException {
+    public final InputStream
+    findResourceAsStream(String resourceName) throws IOException {
         Resource resource = this.findResource(resourceName);
-        if (resource == null)
-            return null;
+        if (resource == null) return null;
         return resource.open();
     }
 
     /**
      * Find a resource by name and return it as a {@link Resource} object.
-     * 
-     * @param resourceName
-     *            Designates the resource; typically structured by slashes ("/") like "
-     *            <code>com/foo/pkg/Bar.class</code>"
-     * @return <code>null</code> if the resource could not be found
+     *
+     * @param resourceName Designates the resource; typically structured by slashes ("/") like
+     *                     "<code>com/foo/pkg/Bar.class</code>"
+     * @return             <code>null</code> if the resource could not be found
      */
     public abstract Resource findResource(String resourceName);
 
-    /**
-     * This one's useful when a resource finder is required, but cannot be created for some reason.
-     */
+    /** This one's useful when a resource finder is required, but cannot be created for some reason. */
     public static final ResourceFinder EMPTY_RESOURCE_FINDER = new ResourceFinder() {
-        public Resource findResource(String resourceName) {
-            return null;
-        }
-
-        public String toString() {
-            return "invalid entry";
-        }
+        @Override public Resource findResource(String resourceName) { return null; }
+        @Override public String   toString()                        { return "invalid entry"; }
     };
 }

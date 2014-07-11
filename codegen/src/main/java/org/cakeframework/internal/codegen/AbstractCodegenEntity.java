@@ -21,7 +21,7 @@ import static org.cakeframework.internal.codegen.CodegenUtil.toStringg;
 import java.util.ArrayList;
 
 /**
- * 
+ *
  * @author Kasper Nielsen
  */
 public class AbstractCodegenEntity {
@@ -54,17 +54,14 @@ public class AbstractCodegenEntity {
     }
 
     public AbstractCodegenEntity addImport(String name) {
-        try {
-            return addImport(Class.forName(name));
-        } catch (ClassNotFoundException e) {
-            throw new RuntimeException(e);
-        }
+        imports().addExplicitImport(name);
+        return this;
     }
 
     /**
      * Adds the specified class to the list of imports. If the specified class is an array type of any dimension. The
      * component type will be added.
-     * 
+     *
      * @param clazz
      *            the class to add to imports.
      * @return this class
@@ -101,7 +98,7 @@ public class AbstractCodegenEntity {
 
     /**
      * Returns a list of all field definitions.
-     * 
+     *
      * @return a list of fields definitions
      */
     final ArrayList<DeclaredField> fields() {
@@ -135,7 +132,7 @@ public class AbstractCodegenEntity {
 
     /**
      * A set of all imports.
-     * 
+     *
      * @return the imports for this entity
      */
     public final ImportSet imports() {
@@ -150,7 +147,7 @@ public class AbstractCodegenEntity {
 
     /**
      * Returns a list of all field definitions.
-     * 
+     *
      * @return a list of fields definitions
      */
     final ArrayList<CodegenClass> innerClasses() {

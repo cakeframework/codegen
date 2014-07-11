@@ -1,3 +1,4 @@
+
 /*
  * Janino - An embedded Java[TM] compiler
  *
@@ -25,35 +26,39 @@
 
 package org.cakeframework.internal.codegen.compiler.util.iterator;
 
-import java.util.AbstractCollection;
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 /**
- * A {@link java.util.Collection} that lazily reads its elements from an {@link java.util.Iterator}.
+ * A {@link java.util.Collection} that lazily reads its elements from an
+ * {@link java.util.Iterator}.
  * <p>
- * In other words, you can call {@link #iterator()} as often as you want, but the {@link IteratorCollection} will
- * iterate over its delegate only once.
+ * In other words, you can call {@link #iterator()} as often as you want, but the
+ * {@link IteratorCollection} will iterate over its delegate only once.
+ *
+ * @param <T> The element type of the iterator and the collection
  */
-public class IteratorCollection extends AbstractCollection {
+@SuppressWarnings({ "rawtypes", "unchecked" }) public
+class IteratorCollection<T> extends AbstractCollection<T> {
+
     /** The delegate. */
-    private final Iterator iterator;
+    private final Iterator<T> iterator;
+
     /** Lazily-filled collection of the elements delivered by the delegate. */
-    private final List elements = new ArrayList();
+    private final List/*<T>*/ elements = new ArrayList();
 
-    public IteratorCollection(Iterator iterator) {
-        this.iterator = iterator;
-    }
+    public
+    IteratorCollection(Iterator iterator) { this.iterator = iterator; }
 
-    public Iterator iterator() {
-        return new Iterator() {
-            private Iterator elementsIterator = IteratorCollection.this.elements.iterator();
+    @Override public Iterator<T>
+    iterator() {
+        return new Iterator/*<T>*/() {
 
-            public Object next() {
+            private Iterator/*<T>*/ elementsIterator = IteratorCollection.this.elements.iterator();
+
+            @Override public Object
+            next() {
                 if (this.elementsIterator != null) {
-                    if (this.elementsIterator.hasNext())
-                        return this.elementsIterator.next();
+                    if (this.elementsIterator.hasNext()) return this.elementsIterator.next();
                     this.elementsIterator = null;
                 }
                 Object o = IteratorCollection.this.iterator.next();
@@ -61,21 +66,23 @@ public class IteratorCollection extends AbstractCollection {
                 return o;
             }
 
-            public boolean hasNext() {
-                return ((this.elementsIterator != null && this.elementsIterator.hasNext()) || IteratorCollection.this.iterator
-                        .hasNext());
+            @Override public boolean
+            hasNext() {
+                return (
+                    (this.elementsIterator != null && this.elementsIterator.hasNext())
+                    || IteratorCollection.this.iterator.hasNext()
+                );
             }
 
-            public void remove() {
-                throw new UnsupportedOperationException();
-            }
+            @Override public void
+            remove() { throw new UnsupportedOperationException(); }
         };
     }
 
-    public int size() {
+    @Override public int
+    size() {
         int size = 0;
-        for (Iterator it = this.iterator(); it.hasNext(); it.next())
-            ++size;
+        for (@SuppressWarnings("unused") Object o : this) ++size;
         return size;
     }
 }

@@ -1,3 +1,4 @@
+
 /*
  * Janino - An embedded Java[TM] compiler
  *
@@ -25,23 +26,28 @@
 
 package org.cakeframework.internal.codegen.compiler;
 
+import org.cakeframework.internal.codegen.compiler.compiler.CompileException;
 import org.cakeframework.internal.codegen.compiler.compiler.Location;
 import org.cakeframework.internal.codegen.compiler.util.StringPattern;
 
-public class FilterWarningHandler implements WarningHandler {
+/** Invokes a delegate iff the handle of the warning matches one or more of a set of {@link StringPattern}s. */
+public
+class FilterWarningHandler implements WarningHandler {
     private final StringPattern[] handlePatterns;
-    private final WarningHandler delegate;
+    private final WarningHandler  delegate;
 
     /**
-     * Popular values for the <code>handlePatterns</code> parameter are {@link StringPattern#PATTERNS_ALL} and
-     * {@link StringPattern#PATTERNS_NONE}.
+     * Popular values for the <code>handlePatterns</code> parameter are
+     * {@link StringPattern#PATTERNS_ALL} and {@link StringPattern#PATTERNS_NONE}.
      */
-    public FilterWarningHandler(StringPattern[] handlePatterns, WarningHandler delegate) {
+    public
+    FilterWarningHandler(StringPattern[] handlePatterns, WarningHandler delegate) {
         this.handlePatterns = handlePatterns;
-        this.delegate = delegate;
+        this.delegate       = delegate;
     }
 
-    public void handleWarning(String handle, String message, Location optionalLocation) {
+    @Override public void
+    handleWarning(String handle, String message, Location optionalLocation) throws CompileException {
         if (StringPattern.matches(this.handlePatterns, handle)) {
             this.delegate.handleWarning(handle, message, optionalLocation);
         }

@@ -15,6 +15,8 @@
  */
 package org.cakeframework.internal.codegen.model.statement;
 
+import java.util.Arrays;
+
 import org.cakeframework.internal.codegen.model.expression.Expression;
 import org.cakeframework.internal.codegen.model.expression.Expressions;
 import org.cakeframework.internal.codegen.model.expression.NameExpression;
@@ -50,4 +52,9 @@ public class Statements {
     public static ExpressionStatement newVar(NameExpression name, Class<?> type, Expression init) {
         return new ExpressionStatement(Expressions.newVar(name, type, init));
     }
+
+    public static BlockStatement blockOf(Statement... statements) {
+        return new BlockStatement(Arrays.asList(statements));
+    }
+
 }

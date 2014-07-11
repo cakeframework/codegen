@@ -1,3 +1,4 @@
+
 /*
  * Janino - An embedded Java[TM] compiler
  *
@@ -30,86 +31,88 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
-import java.util.List;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.cakeframework.internal.codegen.compiler.compiler.CompileException;
 import org.cakeframework.internal.codegen.compiler.compiler.Location;
 
-/**
- * Wraps a {@link java.lang.Class} in an {@link org.cakeframework.internal.codegen.compiler.IClass}.
- */
+/** Wraps a {@link java.lang.Class} in an {@link org.cakeframework.internal.codegen.compiler.IClass}. */
+@SuppressWarnings({ "rawtypes", "unchecked" })
 class ReflectionIClass extends IClass {
-    private/* final */Class clazz;
-    private/* final */IClassLoader iClassLoader;
+    private final Class        clazz;
+    private final IClassLoader iClassLoader;
 
-    /**
-     * @param iClassLoader
-     *            required to load other {@link IClass}es on <code>get...()</code>.
-     */
-    public ReflectionIClass(Class clazz, IClassLoader iClassLoader) {
-        this.clazz = clazz;
+    /** @param iClassLoader Required to load other {@link IClass}es on {@code get...()} */
+    public
+    ReflectionIClass(Class clazz, IClassLoader iClassLoader) {
+        this.clazz        = clazz;
         this.iClassLoader = iClassLoader;
     }
 
-    protected IConstructor[] getDeclaredIConstructors2() {
-        Constructor[] constructors = this.clazz.getDeclaredConstructors();
-        IConstructor[] result = new IConstructor[constructors.length];
+    @Override protected IConstructor[]
+    getDeclaredIConstructors2() {
+        Constructor[]  constructors = this.clazz.getDeclaredConstructors();
+        IConstructor[] result       = new IConstructor[constructors.length];
         for (int i = 0; i < constructors.length; ++i) {
             result[i] = new ReflectionIConstructor(constructors[i]);
         }
         return result;
     }
 
-    protected IMethod[] getDeclaredIMethods2() {
-        Method[] methods = this.clazz.getDeclaredMethods();
-        List iMethods = new ArrayList();
-        for (int i = 0; i < methods.length; ++i) {
-            Method m = methods[i];
+    @Override protected IMethod[]
+    getDeclaredIMethods2() {
+        Method[] methods  = this.clazz.getDeclaredMethods();
+
+        if (methods.length == 0 && this.clazz.isArray()) {
+            return new IMethod[] { new IMethod() {
+                @Override public String            getName()             { return "clone"; }
+                @Override public IClass            getReturnType()       { return ReflectionIClass.this.iClassLoader.TYPE_java_lang_Object; } // SUPPRESS CHECKSTYLE LineLength
+                @Override public boolean           isAbstract()          { return false; }
+                @Override public boolean           isStatic()            { return false; }
+                @Override public Access            getAccess()           { return Access.PUBLIC; }
+                @Override public boolean           isVarargs()           { return false; }
+                @Override public IClass[]          getParameterTypes()   { return new IClass[0]; }
+                @Override public IClass[]          getThrownExceptions() { return new IClass[0]; }
+                @Override public Java.Annotation[] getAnnotations()      { return new Java.Annotation[0]; }
+            } };
+        }
+
+        // Remove synthetic methods that implement 'covariant methods'.
+        Collection<Method> decovariantedMethods;
+        {
+            Map<String, Method> univariants = new HashMap(methods.length);
+            for (Method m : methods) {
+
+                String key = m.getName() + ' ' + Arrays.toString(m.getParameterTypes());
+                Method m2  = (Method) univariants.get(key);
+                if (m2 == null || m2.getReturnType().isAssignableFrom(m.getReturnType())) {
+                    univariants.put(key, m);
+                }
+            }
+            decovariantedMethods = univariants.values();
+        }
+
+        Collection<IMethod> iMethods = new ArrayList(decovariantedMethods.size());
+        for (Method m : decovariantedMethods) {
 
             // Formerly, the Java 5 synthetic methods were skipped here, because they are not "declared", i.e. hand-
             // written. However that turned out to be a bad idea, because with parameterized types the check that
             // all abstract methods are implemented fails.
-            // if ((m.getModifiers() & Mod.SYNTHETIC) != 0) continue;
+
+//            if (Mod.isSynthetic(m.getModifiers())) continue;
 
             // Wrap java.reflection.Method in an IMethod.
             iMethods.add(new ReflectionIMethod(m));
         }
-        if (methods.length == 0 && this.clazz.isArray()) {
-            iMethods.add(new IMethod() {
-                public String getName() {
-                    return "clone";
-                }
-
-                public IClass getReturnType() throws CompileException {
-                    return ReflectionIClass.this.iClassLoader.OBJECT;
-                }
-
-                public boolean isAbstract() {
-                    return false;
-                }
-
-                public boolean isStatic() {
-                    return false;
-                }
-
-                public Access getAccess() {
-                    return Access.PUBLIC;
-                }
-
-                public IClass[] getParameterTypes() throws CompileException {
-                    return new IClass[0];
-                }
-
-                public IClass[] getThrownExceptions() throws CompileException {
-                    return new IClass[0];
-                }
-            });
-        }
         return (IMethod[]) iMethods.toArray(new IMethod[iMethods.size()]);
     }
 
-    protected IField[] getDeclaredIFields2() {
-        Field[] fields = this.clazz.getDeclaredFields();
+    @Override protected IField[]
+    getDeclaredIFields2() {
+        Field[]  fields = this.clazz.getDeclaredFields();
         IField[] result = new IField[fields.length];
         for (int i = 0; i < fields.length; ++i) {
             result[i] = new ReflectionIField(fields[i]);
@@ -117,99 +120,109 @@ class ReflectionIClass extends IClass {
         return result;
     }
 
-    protected IClass[] getDeclaredIClasses2() {
-        return this.classesToIClasses(this.clazz.getDeclaredClasses());
-    }
+    @Override protected IClass[]
+    getDeclaredIClasses2() { return this.classesToIClasses(this.clazz.getDeclaredClasses()); }
 
-    protected IClass getDeclaringIClass2() {
+    @Override protected IClass
+    getDeclaringIClass2() {
         Class declaringClass = this.clazz.getDeclaringClass();
-        if (declaringClass == null)
-            return null;
+        if (declaringClass == null) return null;
         return this.classToIClass(declaringClass);
     }
 
-    protected IClass getOuterIClass2() throws CompileException {
-        if (Modifier.isStatic(this.clazz.getModifiers()))
-            return null;
+    @Override protected IClass
+    getOuterIClass2() throws CompileException {
+        if (Modifier.isStatic(this.clazz.getModifiers())) return null;
         return this.getDeclaringIClass();
     }
 
-    protected IClass getSuperclass2() {
+    @Override protected IClass
+    getSuperclass2() {
         Class superclass = this.clazz.getSuperclass();
         return superclass == null ? null : this.classToIClass(superclass);
     }
 
-    protected IClass[] getInterfaces2() {
+    @Override protected IClass[]
+    getInterfaces2() {
         return this.classesToIClasses(this.clazz.getInterfaces());
     }
 
-    protected String getDescriptor2() {
+    @Override protected String
+    getDescriptor2() {
         return Descriptor.fromClassName(this.clazz.getName());
     }
 
-    public Access getAccess() {
-        return ReflectionIClass.modifiers2Access(this.clazz.getModifiers());
-    }
+    @Override public Access  getAccess()   { return ReflectionIClass.modifiers2Access(this.clazz.getModifiers()); }
+    @Override public boolean isFinal()     { return Modifier.isFinal(this.clazz.getModifiers()); }
+    @Override public boolean isInterface() { return this.clazz.isInterface(); }
+    @Override public boolean isAbstract()  { return Modifier.isAbstract(this.clazz.getModifiers()); }
+    @Override public boolean isArray()     { return this.clazz.isArray(); }
 
-    public boolean isFinal() {
-        return Modifier.isFinal(this.clazz.getModifiers());
-    }
-
-    public boolean isInterface() {
-        return this.clazz.isInterface();
-    }
-
-    public boolean isAbstract() {
-        return Modifier.isAbstract(this.clazz.getModifiers());
-    }
-
-    public boolean isArray() {
-        return this.clazz.isArray();
-    }
-
-    protected IClass getComponentType2() {
+    @Override protected IClass
+    getComponentType2() {
         Class componentType = this.clazz.getComponentType();
         return componentType == null ? null : this.classToIClass(componentType);
     }
 
-    public boolean isPrimitive() {
-        return this.clazz.isPrimitive();
+    @Override public boolean
+    isPrimitive() { return this.clazz.isPrimitive(); }
+
+    @Override public boolean
+    isPrimitiveNumeric() {
+        return (
+            this.clazz == byte.class
+            || this.clazz == short.class
+            || this.clazz == int.class
+            || this.clazz == long.class
+            || this.clazz == char.class
+            || this.clazz == float.class
+            || this.clazz == double.class
+        );
     }
 
-    public boolean isPrimitiveNumeric() {
-        return (this.clazz == byte.class || this.clazz == short.class || this.clazz == int.class
-                || this.clazz == long.class || this.clazz == char.class || this.clazz == float.class || this.clazz == double.class);
-    }
+    /** @return The underlying {@link Class java.lang.Class} */
+    public Class
+    getClazz() { return this.clazz; }
 
-    /**
-     * @return E.g. "int", "int[][]", "pkg1.pkg2.Outer$Inner[]"
-     */
-    public String toString() {
-        int brackets = 0;
-        Class c = this.clazz;
+    /** @return E.g. "int", "int[][]", "pkg1.pkg2.Outer$Inner[]" */
+    @Override public String
+    toString() {
+        int   brackets = 0;
+        Class c        = this.clazz;
         while (c.isArray()) {
             ++brackets;
             c = c.getComponentType();
         }
         String s = c.getName();
-        while (brackets-- > 0)
-            s += "[]";
+        while (brackets-- > 0) s += "[]";
         return s;
     }
 
-    private class ReflectionIConstructor extends IConstructor {
-        public ReflectionIConstructor(Constructor constructor) {
-            this.constructor = constructor;
-        }
+    private
+    class ReflectionIConstructor extends IConstructor {
+
+        public
+        ReflectionIConstructor(Constructor constructor) { this.constructor = constructor; }
 
         // Implement IMember.
-        public Access getAccess() {
+        @Override public Access
+        getAccess() {
             int mod = this.constructor.getModifiers();
             return ReflectionIClass.modifiers2Access(mod);
         }
 
+        @Override public Java.Annotation[]
+        getAnnotations() { return new Java.Annotation[0]; }
+
+        @Override public boolean
+        isVarargs() {
+            // TRANSIENT is identical with VARARGS.
+            return Modifier.isTransient(this.constructor.getModifiers());
+        }
+
         // Implement "IConstructor".
-        public IClass[] getParameterTypes() throws CompileException {
+        @Override public IClass[]
+        getParameterTypes() throws CompileException {
             IClass[] parameterTypes = ReflectionIClass.this.classesToIClasses(this.constructor.getParameterTypes());
 
             // The JAVADOC of java.lang.reflect.Constructor does not document it, but
@@ -217,12 +230,21 @@ class ReflectionIClass extends IClass {
             IClass outerClass = ReflectionIClass.this.getOuterIClass();
             if (outerClass != null) {
                 if (parameterTypes.length < 1) {
-                    throw new CompileException("Constructor \"" + this.constructor
-                            + "\" lacks synthetic enclosing instance parameter", null);
+                    throw new CompileException(
+                        "Constructor \"" + this.constructor + "\" lacks synthetic enclosing instance parameter",
+                        null
+                    );
                 }
                 if (parameterTypes[0] != outerClass) {
-                    throw new CompileException(("Enclosing instance parameter of constructor \"" + this.constructor
-                            + "\" has wrong type -- \"" + parameterTypes[0] + "\" vs. \"" + outerClass + "\""), null);
+                    throw new CompileException((
+                        "Enclosing instance parameter of constructor \""
+                        + this.constructor
+                        + "\" has wrong type -- \""
+                        + parameterTypes[0]
+                        + "\" vs. \""
+                        + outerClass
+                        + "\""
+                    ), null);
                 }
                 IClass[] tmp = new IClass[parameterTypes.length - 1];
                 System.arraycopy(parameterTypes, 1, tmp, 0, tmp.length);
@@ -232,106 +254,123 @@ class ReflectionIClass extends IClass {
             return parameterTypes;
         }
 
-        public String getDescriptor() {
-            Class[] parameterTypes = this.constructor.getParameterTypes();
+        @Override public String
+        getDescriptor() {
+            Class[]  parameterTypes       = this.constructor.getParameterTypes();
             String[] parameterDescriptors = new String[parameterTypes.length];
             for (int i = 0; i < parameterDescriptors.length; ++i) {
                 parameterDescriptors[i] = Descriptor.fromClassName(parameterTypes[i].getName());
             }
-            return new MethodDescriptor(parameterDescriptors, Descriptor.VOID_).toString();
+            return new MethodDescriptor(parameterDescriptors, Descriptor.VOID).toString();
         }
 
-        public IClass[] getThrownExceptions() {
+        @Override public IClass[]
+        getThrownExceptions() {
             return ReflectionIClass.this.classesToIClasses(this.constructor.getExceptionTypes());
         }
 
         final Constructor constructor;
-    };
+    }
+    public
+    class ReflectionIMethod extends IMethod {
 
-    private class ReflectionIMethod extends IMethod {
-        public ReflectionIMethod(Method method) {
-            this.method = method;
-        }
+        public
+        ReflectionIMethod(Method method) { this.method = method; }
 
         // Implement IMember.
-        public Access getAccess() {
-            return ReflectionIClass.modifiers2Access(this.method.getModifiers());
-        }
+        @Override public Access
+        getAccess() { return ReflectionIClass.modifiers2Access(this.method.getModifiers()); }
+
+        @Override public Java.Annotation[]
+        getAnnotations() { return new Java.Annotation[0]; }
 
         // Implement "IMethod".
-        public String getName() {
-            return this.method.getName();
+        @Override public String
+        getName() { return this.method.getName(); }
+
+        @Override public boolean
+        isVarargs() {
+
+            // VARARGS is identical with TRANSIENT.
+            return Modifier.isTransient(this.method.getModifiers());
         }
 
-        public IClass[] getParameterTypes() {
-            return ReflectionIClass.this.classesToIClasses(this.method.getParameterTypes());
-        }
+        @Override public IClass[]
+        getParameterTypes() { return ReflectionIClass.this.classesToIClasses(this.method.getParameterTypes()); }
 
-        public boolean isStatic() {
-            return Modifier.isStatic(this.method.getModifiers());
-        }
+        @Override public boolean
+        isStatic() { return Modifier.isStatic(this.method.getModifiers()); }
 
-        public boolean isAbstract() {
-            return Modifier.isAbstract(this.method.getModifiers());
-        }
+        @Override public boolean
+        isAbstract() { return Modifier.isAbstract(this.method.getModifiers()); }
 
-        public IClass getReturnType() {
-            return ReflectionIClass.this.classToIClass(this.method.getReturnType());
-        }
+        @Override public IClass
+        getReturnType() { return ReflectionIClass.this.classToIClass(this.method.getReturnType()); }
 
-        public IClass[] getThrownExceptions() {
-            return ReflectionIClass.this.classesToIClasses(this.method.getExceptionTypes());
-        }
+        @Override public IClass[]
+        getThrownExceptions() { return ReflectionIClass.this.classesToIClasses(this.method.getExceptionTypes()); }
 
-        final Method method;
-    };
+        private final Method method;
+    }
 
-    private class ReflectionIField extends IField {
-        public ReflectionIField(Field field) {
-            this.field = field;
-        }
+    private
+    class ReflectionIField extends IField {
+
+        public
+        ReflectionIField(Field field) { this.field = field; }
 
         // Implement IMember.
-        public Access getAccess() {
-            return ReflectionIClass.modifiers2Access(this.field.getModifiers());
-        }
+        @Override public Access
+        getAccess() { return ReflectionIClass.modifiers2Access(this.field.getModifiers()); }
+
+        @Override public Java.Annotation[]
+        getAnnotations() { return new Java.Annotation[0]; }
 
         // Implement "IField".
-        public String getName() {
-            return this.field.getName();
-        }
 
-        public boolean isStatic() {
-            return Modifier.isStatic(this.field.getModifiers());
-        }
+        @Override public String
+        getName() { return this.field.getName(); }
 
-        public IClass getType() {
-            return ReflectionIClass.this.classToIClass(this.field.getType());
-        }
+        @Override public boolean
+        isStatic() { return Modifier.isStatic(this.field.getModifiers()); }
 
-        public String toString() {
-            return (Descriptor.toString(this.getDeclaringIClass().getDescriptor()) + "." + this.getName());
+        @Override public IClass
+        getType() { return ReflectionIClass.this.classToIClass(this.field.getType()); }
+
+        @Override public String
+        toString() {
+            return Descriptor.toString(this.getDeclaringIClass().getDescriptor()) + "." + this.getName();
         }
 
         /**
-         * This implementation of {@link IClass.IField#getConstantValue()} is not completely correct:
+         * This implementation of {@link IClass.IField#getConstantValue()} is
+         * not completely correct:
          * <ul>
-         * <li>
-         * It treats non-static fields as non-constant
-         * <li>
-         * Even fields with a <i>non-constant</i> initializer are identified as constant. (The value of that field may
-         * be different in a different JVM instance -- the classical example is {@link java.io.File#separator}.)
+         *   <li>
+         *   It treats non-static fields as non-constant
+         *   <li>
+         *   Even fields with a <i>non-constant</i> initializer are identified
+         *   as constant. (The value of that field may be different in a
+         *   different JVM instance -- the classical example is
+         *   {@link java.io.File#separator}.)
          * </ul>
          */
-        public Object getConstantValue() throws CompileException {
-            int mod = this.field.getModifiers();
+        @Override public Object
+        getConstantValue() throws CompileException {
+            int   mod   = this.field.getModifiers();
             Class clazz = this.field.getType();
-            if (Modifier.isStatic(mod) && Modifier.isFinal(mod) && (clazz.isPrimitive() || clazz == String.class)) {
+            if (
+                Modifier.isStatic(mod)
+                && Modifier.isFinal(mod)
+                && (clazz.isPrimitive() || clazz == String.class)
+            ) {
                 try {
                     return this.field.get(null);
                 } catch (IllegalAccessException ex) {
-                    throw new CompileException("Field \"" + this.field.getName() + "\" is not accessible",
-                            (Location) null);
+                    throw new CompileException( // SUPPRESS CHECKSTYLE AvoidHidingCause
+                        "Field \"" + this.field.getName() + "\" is not accessible",
+                        (Location) null
+                    );
                 }
             }
             return NOT_CONSTANT;
@@ -340,10 +379,9 @@ class ReflectionIClass extends IClass {
         final Field field;
     }
 
-    /**
-     * Load {@link Class} through {@link IClassLoader} to ensure unique {@link IClass}es.
-     */
-    private IClass classToIClass(Class c) {
+    /** Loads {@link Class} through {@link IClassLoader} to ensure unique {@link IClass}es. */
+    private IClass
+    classToIClass(Class c) {
         IClass iClass;
         try {
             iClass = this.iClassLoader.loadIClass(Descriptor.fromClassName(c.getName()));
@@ -356,18 +394,21 @@ class ReflectionIClass extends IClass {
         return iClass;
     }
 
-    /**
-     * @see #classToIClass(Class)
-     */
-    private IClass[] classesToIClasses(Class[] cs) {
+    /** @see #classToIClass(Class) */
+    private IClass[]
+    classesToIClasses(Class[] cs) {
         IClass[] result = new IClass[cs.length];
-        for (int i = 0; i < cs.length; ++i)
-            result[i] = this.classToIClass(cs[i]);
+        for (int i = 0; i < cs.length; ++i) result[i] = this.classToIClass(cs[i]);
         return result;
     }
 
-    private static Access modifiers2Access(int modifiers) {
-        return (Modifier.isPrivate(modifiers) ? Access.PRIVATE : Modifier.isProtected(modifiers) ? Access.PROTECTED
-                : Modifier.isPublic(modifiers) ? Access.PUBLIC : Access.DEFAULT);
+    private static Access
+    modifiers2Access(int modifiers) {
+        return (
+            Modifier.isPrivate(modifiers)   ? Access.PRIVATE   :
+            Modifier.isProtected(modifiers) ? Access.PROTECTED :
+            Modifier.isPublic(modifiers)    ? Access.PUBLIC    :
+            Access.DEFAULT
+        );
     }
 }

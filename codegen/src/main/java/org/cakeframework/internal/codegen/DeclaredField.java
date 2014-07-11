@@ -23,9 +23,9 @@ import static org.cakeframework.internal.codegen.CodegenUtil.indent;
  * @author Kasper Nielsen
  */
 class DeclaredField {
-    String contents;
+    final String contents;
 
-    String javadoc;
+    final String javadoc;
 
     DeclaredField(String contents) {
         this(contents, null);

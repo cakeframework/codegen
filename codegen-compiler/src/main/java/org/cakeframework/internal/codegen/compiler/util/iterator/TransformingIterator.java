@@ -1,3 +1,4 @@
+
 /*
  * Janino - An embedded Java[TM] compiler
  *
@@ -25,22 +26,31 @@
 
 package org.cakeframework.internal.codegen.compiler.util.iterator;
 
-import java.util.Iterator;
+import java.util.*;
 
 /**
  * An {@link java.util.Iterator} that transforms its elements on-the-fly.
+ *
+ * @param <T1> The element type of the delegate iterator
+ * @param <T2> The element type of this iterator
  */
-public abstract class TransformingIterator extends FilterIterator {
-    public TransformingIterator(Iterator delegate) {
-        super(delegate);
-    }
+public abstract
+class TransformingIterator<T1, T2> implements Iterator<T2> {
 
-    public final Object next() {
-        return this.transform(this.delegate.next());
-    }
+    private final Iterator<T1> delegate;
 
-    /**
-     * Derived classes must implement this method such that it does the desired transformation.
-     */
-    protected abstract Object transform(Object o);
+    public
+    TransformingIterator(Iterator<T1> delegate) { this.delegate = delegate; }
+
+    @Override public boolean
+    hasNext() { return this.delegate.hasNext(); }
+
+    @Override public final T2
+    next() { return this.transform(this.delegate.next()); }
+
+    @Override public void
+    remove() { this.delegate.remove(); }
+
+    /** Derived classes must implement this method such that it does the desired transformation. */
+    protected abstract T2 transform(T1 o);
 }

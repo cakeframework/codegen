@@ -56,7 +56,6 @@ import org.cakeframework.internal.codegen.model.statement.ExpressionStatement;
 import org.cakeframework.internal.codegen.model.statement.ForStatement;
 import org.cakeframework.internal.codegen.model.statement.IfStatement;
 import org.cakeframework.internal.codegen.model.statement.LabeledStatement;
-import org.cakeframework.internal.codegen.model.statement.QuiteBlockStatement;
 import org.cakeframework.internal.codegen.model.statement.ReturnStatement;
 import org.cakeframework.internal.codegen.model.statement.Statement;
 import org.cakeframework.internal.codegen.model.statement.SwitchEntryStatement;
@@ -190,29 +189,29 @@ public class JavaRenderer extends CodegenVisitor {
     }
 
     public void visit(BlockStatement n) {
-        if (n instanceof QuiteBlockStatement) {
-            for (int i = 0; i < n.getStatements().size(); i++) {
-                n.getStatements().get(i).accept(this);
-                if (i != n.getStatements().size() - 1) {
-                    newLine();
-                    indent();
-                }
-            }
-        } else {
-            a("{");
-            if (!n.getStatements().isEmpty()) {
-                newLine();
-                indent++;
-                for (Statement st : n) {
-                    indent();
-                    st.accept(this);
-                    newLine();
-                }
-                indent--;
+        // if (n instanceof QuiteBlockStatement) {
+        // for (int i = 0; i < n.getStatements().size(); i++) {
+        // n.getStatements().get(i).accept(this);
+        // if (i != n.getStatements().size() - 1) {
+        // newLine();
+        // indent();
+        // }
+        // }
+        // } else {
+        a("{");
+        if (!n.getStatements().isEmpty()) {
+            newLine();
+            indent++;
+            for (Statement st : n) {
                 indent();
+                st.accept(this);
+                newLine();
             }
-            a("}");
+            indent--;
+            indent();
         }
+        a("}");
+        // }
     }
 
     /** {@inheritDoc} */
@@ -297,7 +296,6 @@ public class JavaRenderer extends CodegenVisitor {
         a("for (").a(n.getInit(), false);
         a(n.getCompare() == null, ";", "; ").a(n.getCompare());
         a(n.getUpdate().isEmpty(), ";", "; ").a(n.getUpdate(), false).a(") ").a(n.getBody());
-
     }
 
     /** {@inheritDoc} */
@@ -482,7 +480,7 @@ public class JavaRenderer extends CodegenVisitor {
     /** {@inheritDoc} */
     @Override
     public void visit(WhileStatement n) {
-        throw new UnsupportedOperationException();
+        a("while (").a(n.getCondition()).a(") ").a(n.getBody());
     }
 
     public static String renderBlock(BlockStatement bs, int indent) {

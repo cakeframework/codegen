@@ -188,6 +188,11 @@ public class Codegen {
                     }
                     return new ByteArrayInputStream(s.toString().getBytes());
                 }
+
+                @Override
+                public long lastModified() {
+                    return 0;
+                }
             };
         }
     }

@@ -1,3 +1,4 @@
+
 /*
  * Janino - An embedded Java[TM] compiler
  *
@@ -25,24 +26,25 @@
 
 package org.cakeframework.internal.codegen.compiler.util.resource;
 
-import java.io.File;
+import java.io.*;
 
 /**
- * This class specializes the {@link org.cakeframework.internal.codegen.compiler.util.resource.ResourceFinder} for finding
- * resources in {@link java.io.File}s.
+ * This class specializes the {@link org.cakeframework.internal.codegen.compiler.util.resource.ResourceFinder}
+ * for finding resources in {@link java.io.File}s.
  * <p>
- * It finds {@link FileResource}s instead of simple {@link Resource}s.
+ * It finds {@link FileResource}s instead of simple
+ * {@link Resource}s.
  */
-public abstract class FileResourceFinder extends ResourceFinder {
-    public final Resource findResource(String resourceName) {
+public abstract
+class FileResourceFinder extends ResourceFinder {
+
+    @Override public final Resource
+    findResource(String resourceName) {
         File file = this.findResourceAsFile(resourceName);
-        if (file == null)
-            return null;
+        if (file == null) return null;
         return new FileResource(file);
     }
 
-    /**
-     * Converts a given resource resource name into a {@link File}.
-     */
+    /** Converts a given resource resource name into a {@link File}. */
     protected abstract File findResourceAsFile(String resourceName);
 }

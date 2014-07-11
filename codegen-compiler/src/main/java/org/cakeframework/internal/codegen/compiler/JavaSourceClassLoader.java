@@ -27,10 +27,8 @@ package org.cakeframework.internal.codegen.compiler;
 
 import java.io.File;
 import java.io.Reader;
-import java.security.ProtectionDomain;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -49,19 +47,11 @@ import org.cakeframework.internal.codegen.compiler.util.resource.ResourceFinder;
  * As with any {@link ClassLoader}, it is not possible to "update" classes after they've been loaded. The way to achieve
  * this is to give up on the {@link JavaSourceClassLoader} and create a new one.
  */
-public class JavaSourceClassLoader extends ClassLoader {
+@SuppressWarnings({ "rawtypes", "unchecked" })
+public class JavaSourceClassLoader extends AbstractJavaSourceClassLoader {
 
     public JavaSourceClassLoader() {
         this(ClassLoader.getSystemClassLoader());
-    }
-
-    protected ProtectionDomainFactory optionalProtectionDomainFactory = null;
-
-    /**
-     * @see ClassLoader#defineClass(String, byte[], int, int, ProtectionDomain)
-     */
-    public final void setProtectionDomainFactory(ProtectionDomainFactory optionalProtectionDomainFactory) {
-        this.optionalProtectionDomainFactory = optionalProtectionDomainFactory;
     }
 
     public JavaSourceClassLoader(ClassLoader parentClassLoader) {
@@ -85,7 +75,7 @@ public class JavaSourceClassLoader extends ClassLoader {
             String optionalCharacterEncoding) {
         this(parentClassLoader, // parentClassLoader
                 optionalSourcePath == null ? (ResourceFinder) new DirectoryResourceFinder(new File("."))
-                        : (ResourceFinder) new PathResourceFinder(optionalSourcePath), optionalCharacterEncoding // optionalCharacterEncoding
+        : (ResourceFinder) new PathResourceFinder(optionalSourcePath), optionalCharacterEncoding // optionalCharacterEncoding
         );
     }
 
@@ -113,24 +103,25 @@ public class JavaSourceClassLoader extends ClassLoader {
         );
     }
 
+    @Override
     public void setSourcePath(File[] sourcePath) {
         this.iClassLoader.setSourceFinder(new PathResourceFinder(sourcePath));
     }
 
+    @Override
     public void setSourceFileCharacterEncoding(String optionalCharacterEncoding) {
         this.iClassLoader.setCharacterEncoding(optionalCharacterEncoding);
     }
 
+    @Override
     public void setDebuggingInfo(boolean debugSource, boolean debugLines, boolean debugVars) {
         this.debugSource = debugSource;
         this.debugLines = debugLines;
         this.debugVars = debugVars;
     }
 
-    /**
-     * @see UnitCompiler#setCompileErrorHandler
-     */
-    public void setCompileErrorHandler(UnitCompiler.ErrorHandler optionalCompileErrorHandler) {
+    /** @see UnitCompiler#setCompileErrorHandler */
+    public void setCompileErrorHandler(ErrorHandler optionalCompileErrorHandler) {
         this.iClassLoader.setCompileErrorHandler(optionalCompileErrorHandler);
     }
 
@@ -147,14 +138,17 @@ public class JavaSourceClassLoader extends ClassLoader {
      *
      * @throws ClassNotFoundException
      */
-    protected Class findClass(String name) throws ClassNotFoundException {
+    @Override
+    protected/* synchronized <- No need to synchronize, because 'loadClass()' is synchronized */Class findClass(
+            String name) throws ClassNotFoundException {
+
         // Check if the bytecode for that class was generated already.
-        byte[] bytecode = (byte[]) this.precompiledClasses.remove(name);
+        byte[] bytecode = this.precompiledClasses.remove(name);
         if (bytecode == null) {
 
             // Read, scan, parse and compile the right compilation unit.
             {
-                Map bytecodes = this.generateBytecodes(name);
+                Map<String /* name */, byte[] /* bytecode */> bytecodes = this.generateBytecodes(name);
                 if (bytecodes == null) {
                     throw new ClassNotFoundException(name);
                 }
@@ -162,7 +156,7 @@ public class JavaSourceClassLoader extends ClassLoader {
             }
 
             // Now the bytecode for our class should be available.
-            bytecode = (byte[]) this.precompiledClasses.remove(name);
+            bytecode = this.precompiledClasses.remove(name);
             if (bytecode == null) {
                 throw new JaninoRuntimeException("SNO: Scanning, parsing and compiling class \"" + name
                         + "\" did not create a class file!?");
@@ -172,10 +166,52 @@ public class JavaSourceClassLoader extends ClassLoader {
         return this.defineBytecode(name, bytecode);
     }
 
+    /**
+     * This {@link Map} keeps those classes which were already compiled, but not yet defined i.e. which were not yet
+     * passed to {@link ClassLoader#defineClass(java.lang.String, byte[], int, int)}.
+     */
+    private final Map<String /* name */, byte[] /* bytecode */> precompiledClasses = new HashMap();
+
+    /**
+     * Find, scan, parse the right compilation unit. Compile the parsed compilation unit to bytecode. This may cause
+     * more compilation units being scanned and parsed. Continue until all compilation units are compiled.
+     *
+     * @return String name => byte[] bytecode, or <code>null</code> if no source code could be found
+     * @throws ClassNotFoundException
+     *             on compilation problems
+     */
+    protected Map<String /* name */, byte[] /* bytecode */> generateBytecodes(String name)
+            throws ClassNotFoundException {
+        if (this.iClassLoader.loadIClass(Descriptor.fromClassName(name)) == null) {
+            return null;
+        }
+
+        Map<String /* name */, byte[] /* bytecode */> bytecodes = new HashMap();
+        Set<UnitCompiler> compiledUnitCompilers = new HashSet();
+        COMPILE_UNITS: for (;;) {
+            for (UnitCompiler uc : this.unitCompilers) {
+                if (!compiledUnitCompilers.contains(uc)) {
+                    ClassFile[] cfs;
+                    try {
+                        cfs = uc.compileUnit(this.debugSource, this.debugLines, this.debugVars);
+                    } catch (CompileException ex) {
+                        throw new ClassNotFoundException(ex.getMessage(), ex);
+                    }
+                    for (ClassFile cf : cfs) {
+                        bytecodes.put(cf.getThisClassName(), cf.toByteArray());
+                    }
+                    compiledUnitCompilers.add(uc);
+                    continue COMPILE_UNITS;
+                }
+            }
+            return bytecodes;
+        }
+    }
+
     public byte[] load(String name) {
 
         // Check if the bytecode for that class was generated already.
-        byte[] bytecode = (byte[]) this.precompiledClasses.remove(name);
+        byte[] bytecode = this.precompiledClasses.remove(name);
         if (bytecode == null) {
 
             // Read, scan, parse and compile the right compilation unit.
@@ -193,85 +229,16 @@ public class JavaSourceClassLoader extends ClassLoader {
             }
 
             // Now the bytecode for our class should be available.
-            bytecode = (byte[]) this.precompiledClasses.remove(name);
+            bytecode = this.precompiledClasses.remove(name);
         }
         return bytecode;
     }
 
     /**
-     * This {@link Map} keeps those classes which were already compiled, but not yet defined i.e. which were not yet
-     * passed to {@link ClassLoader#defineClass(java.lang.String, byte[], int, int)}.
-     */
-    Map precompiledClasses = new HashMap(); // String name => byte[] bytecode
-
-    /**
-     * Find, scan, parse the right compilation unit. Compile the parsed compilation unit to bytecode. This may cause
-     * more compilation units being scanned and parsed. Continue until all compilation units are compiled.
-     *
-     * @return String name => byte[] bytecode, or <code>null</code> if no source code could be found
-     * @throws ClassNotFoundException
-     *             on compilation problems
-     */
-    public Map generateBytecodes(String name) throws ClassNotFoundException {
-        if (this.iClassLoader.loadIClass(Descriptor.fromClassName(name)) == null) {
-            return null;
-        }
-
-        Map bytecodes = new HashMap(); // String name => byte[] bytecode
-        Set compiledUnitCompilers = new HashSet();
-        COMPILE_UNITS: for (;;) {
-            for (Iterator it = this.unitCompilers.iterator(); it.hasNext();) {
-                UnitCompiler uc = (UnitCompiler) it.next();
-                if (!compiledUnitCompilers.contains(uc)) {
-                    ClassFile[] cfs;
-                    try {
-                        cfs = uc.compileUnit(this.debugSource, this.debugLines, this.debugVars);
-                    } catch (CompileException ex) {
-                        throw new ClassNotFoundException("Compiling unit \"" + uc.compilationUnit.optionalFileName
-                                + "\"", ex);
-                    }
-                    for (int i = 0; i < cfs.length; ++i) {
-                        ClassFile cf = cfs[i];
-                        bytecodes.put(cf.getThisClassName(), cf.toByteArray());
-                    }
-                    compiledUnitCompilers.add(uc);
-                    continue COMPILE_UNITS;
-                }
-            }
-            return bytecodes;
-        }
-    }
-
-    /**
-     * Define a set of classes, like {@link java.lang.ClassLoader#defineClass(java.lang.String, byte[], int, int)}. If
-     * the <code>bytecodes</code> contains an entry for <code>name</code>, then the {@link Class} defined for that name
-     * is returned.
-     *
-     * @param bytecodes
-     *            String name => byte[] bytecode
      * @throws ClassFormatError
-     */
-    protected Class defineBytecodes(String name, Map bytecodes) {
-        Class clazz = null;
-        for (Iterator it = bytecodes.entrySet().iterator(); it.hasNext();) {
-            Map.Entry me = (Map.Entry) it.next();
-            String name2 = (String) me.getKey();
-            byte[] ba = (byte[]) me.getValue();
-
-            Class c = this.defineBytecode(name2, ba);
-            if (name2.equals(name)) {
-                clazz = c;
-            }
-        }
-        return clazz;
-    }
-
-    /**
      * @see #setProtectionDomainFactory
-     *
-     * @throws ClassFormatError
      */
-    protected Class defineBytecode(String className, byte[] ba) {
+    private Class defineBytecode(String className, byte[] ba) {
 
         return this.defineClass(className, ba, 0, ba.length, this.optionalProtectionDomainFactory == null ? null
                 : this.optionalProtectionDomainFactory.getProtectionDomain(ClassFile.getSourceResourceName(className)));
@@ -279,24 +246,10 @@ public class JavaSourceClassLoader extends ClassLoader {
 
     private final JavaSourceIClassLoader iClassLoader;
 
-    protected boolean debugSource = Boolean.getBoolean(ICookable.SYSTEM_PROPERTY_SOURCE_DEBUGGING_ENABLE);
-    protected boolean debugLines = this.debugSource;
-    protected boolean debugVars = this.debugSource;
+    private boolean debugSource = Boolean.getBoolean(ICookable.SYSTEM_PROPERTY_SOURCE_DEBUGGING_ENABLE);
+    private boolean debugLines = this.debugSource;
+    private boolean debugVars = this.debugSource;
 
-    /**
-     * Collection of parsed, but uncompiled compilation units.
-     */
-    private final Set unitCompilers = new HashSet(); // UnitCompiler
-
-    /**
-     * @see AbstractJavaSourceClassLoader#setProtectionDomainFactory
-     */
-    public interface ProtectionDomainFactory {
-
-        /**
-         * @param sourceResourceName
-         *            E.g. 'pkg1/pkg2/Outer.java'
-         */
-        ProtectionDomain getProtectionDomain(String sourceResourceName);
-    }
+    /** Collection of parsed, but still uncompiled compilation units. */
+    private final Set<UnitCompiler> unitCompilers = new HashSet();
 }

@@ -1,3 +1,4 @@
+
 /*
  * Janino - An embedded Java[TM] compiler
  *
@@ -31,95 +32,192 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
+import org.cakeframework.internal.codegen.compiler.IClass.IConstructor;
+import org.cakeframework.internal.codegen.compiler.IClass.IMethod;
 import org.cakeframework.internal.codegen.compiler.util.resource.JarDirectoriesResourceFinder;
 import org.cakeframework.internal.codegen.compiler.util.resource.PathResourceFinder;
 import org.cakeframework.internal.codegen.compiler.util.resource.ResourceFinder;
 
-/**
- * Loads an {@link IClass} by type name.
- */
-public abstract class IClassLoader {
+/** Loads an {@link IClass} by type name. */
+@SuppressWarnings({ "rawtypes", "unchecked" }) public abstract
+class IClassLoader {
     private static final boolean DEBUG = false;
 
-    // The following are constants, but cannot be declared FINAL, because they are only initialized by the
+    // The following are constants, but cannot be declared FINAL, because they are only initialized by
     // "postConstruct()".
 
-    public IClass OBJECT;
-    public IClass STRING;
-    public IClass CLASS;
-    public IClass THROWABLE;
-    public IClass RUNTIME_EXCEPTION;
-    public IClass ERROR;
-    public IClass CLONEABLE;
-    public IClass SERIALIZABLE;
-    public IClass BOOLEAN;
-    public IClass BYTE;
-    public IClass CHARACTER;
-    public IClass SHORT;
-    public IClass INTEGER;
-    public IClass LONG;
-    public IClass FLOAT;
-    public IClass DOUBLE;
+    // CHECKSTYLE MemberName:OFF
+    // CHECKSTYLE AbbreviationAsWordInName:OFF
+    /** Representation of the {@link java.lang.Override} annotation. */
+    public IClass ANNO_java_lang_Override;
 
-    public IClassLoader(IClassLoader optionalParentIClassLoader) {
+    /** Representation of the {@link java.lang.AssertionError} type. */
+    public IClass TYPE_java_lang_AssertionError;
+    /** Representation of the {@link java.lang.Boolean} type. */
+    public IClass TYPE_java_lang_Boolean;
+    /** Representation of the {@link java.lang.Byte} type. */
+    public IClass TYPE_java_lang_Byte;
+    /** Representation of the {@link java.lang.Character} type. */
+    public IClass TYPE_java_lang_Character;
+    /** Representation of the {@link java.lang.Class} type. */
+    public IClass TYPE_java_lang_Class;
+    /** Representation of the {@link java.lang.Cloneable} type. */
+    public IClass TYPE_java_lang_Cloneable;
+    /** Representation of the {@link java.lang.Double} type. */
+    public IClass TYPE_java_lang_Double;
+    /** Representation of the {@link java.lang.Exception} type. */
+    public IClass TYPE_java_lang_Exception;
+    /** Representation of the {@link java.lang.Error} type. */
+    public IClass TYPE_java_lang_Error;
+    /** Representation of the {@link java.lang.Float} type. */
+    public IClass TYPE_java_lang_Float;
+    /** Representation of the {@link java.lang.Integer} type. */
+    public IClass TYPE_java_lang_Integer;
+    /** Representation of the {@link java.lang.Iterable} type. */
+    public IClass TYPE_java_lang_Iterable;
+    /** Representation of the {@link java.lang.Long} type. */
+    public IClass TYPE_java_lang_Long;
+    /** Representation of the {@link java.lang.Object} type. */
+    public IClass TYPE_java_lang_Object;
+    /** Representation of the {@link java.lang.RuntimeException} type. */
+    public IClass TYPE_java_lang_RuntimeException;
+    /** Representation of the {@link java.lang.Short} type. */
+    public IClass TYPE_java_lang_Short;
+    /** Representation of the {@link java.lang.String} type. */
+    public IClass TYPE_java_lang_String;
+    /** Representation of the {@link java.lang.StringBuilder} type. */
+    public IClass TYPE_java_lang_StringBuilder;
+    /** Representation of the {@link java.lang.Throwable} type. */
+    public IClass TYPE_java_lang_Throwable;
+    /** Representation of the {@link java.io.Serializable} type. */
+    public IClass TYPE_java_io_Serializable;
+    /** Representation of the {@link java.util.Iterator} type. */
+    public IClass TYPE_java_util_Iterator;
+
+    /** Representation of the {@link Iterable#iterator()} method. */
+    public IMethod METH_java_lang_Iterable__iterator;
+    /** Representation of the {@link String#concat(String)} method. */
+    public IMethod METH_java_lang_String__concat__java_lang_String;
+    /** Representation of the {@link String#valueOf(int)} method. */
+    public IMethod METH_java_lang_String__valueOf__int;
+    /** Representation of the {@link String#valueOf(long)} method. */
+    public IMethod METH_java_lang_String__valueOf__long;
+    /** Representation of the {@link String#valueOf(float)} method. */
+    public IMethod METH_java_lang_String__valueOf__float;
+    /** Representation of the {@link String#valueOf(double)} method. */
+    public IMethod METH_java_lang_String__valueOf__double;
+    /** Representation of the {@link String#valueOf(char)} method. */
+    public IMethod METH_java_lang_String__valueOf__char;
+    /** Representation of the {@link String#valueOf(boolean)} method. */
+    public IMethod METH_java_lang_String__valueOf__boolean;
+    /** Representation of the {@link String#valueOf(Object)} method. */
+    public IMethod METH_java_lang_String__valueOf__java_lang_Object;
+    /** Representation of the {@link StringBuilder#append(String)} method. */
+    public IMethod METH_java_lang_StringBuilder__append__java_lang_String;
+    /** Representation of the {@link StringBuilder#toString()} method. */
+    public IMethod METH_java_lang_StringBuilder__toString;
+    /** Representation of the {@link java.util.Iterator#hasNext()} method. */
+    public IMethod METH_java_util_Iterator__hasNext;
+    /** Representation of the {@link java.util.Iterator#next()} method. */
+    public IMethod METH_java_util_Iterator__next;
+
+    /** Representation of the {@link StringBuilder#StringBuilder(String)} constructor. */
+    public IConstructor CTOR_java_lang_StringBuilder__java_lang_String;
+    // CHECKSTYLE AbbreviationAsWordInName:ON
+    // CHECKSTYLE MemberName:ON
+
+    public
+    IClassLoader(IClassLoader optionalParentIClassLoader) {
         this.optionalParentIClassLoader = optionalParentIClassLoader;
     }
 
     /**
-     * This method must be called by the constructor of the directly derived class. (The reason being is that this
-     * method invokes abstract {@link #loadIClass(String)} which will not work until the implementing class is
-     * constructed.)
+     * This method must be called by the constructor of the directly derived
+     * class. (The reason being is that this method invokes abstract
+     * {@link #loadIClass(String)} which will not work until the implementing
+     * class is constructed.)
      */
-    protected final void postConstruct() {
+    protected final void
+    postConstruct() {
         try {
-            this.OBJECT = this.loadIClass(Descriptor.OBJECT);
-            this.STRING = this.loadIClass(Descriptor.STRING);
-            this.CLASS = this.loadIClass(Descriptor.CLASS);
-            this.THROWABLE = this.loadIClass(Descriptor.THROWABLE);
-            this.RUNTIME_EXCEPTION = this.loadIClass(Descriptor.RUNTIME_EXCEPTION);
-            this.ERROR = this.loadIClass(Descriptor.ERROR);
-            this.CLONEABLE = this.loadIClass(Descriptor.CLONEABLE);
-            this.SERIALIZABLE = this.loadIClass(Descriptor.SERIALIZABLE);
-            this.BOOLEAN = this.loadIClass(Descriptor.BOOLEAN);
-            this.BYTE = this.loadIClass(Descriptor.BYTE);
-            this.CHARACTER = this.loadIClass(Descriptor.CHARACTER);
-            this.SHORT = this.loadIClass(Descriptor.SHORT);
-            this.INTEGER = this.loadIClass(Descriptor.INTEGER);
-            this.LONG = this.loadIClass(Descriptor.LONG);
-            this.FLOAT = this.loadIClass(Descriptor.FLOAT);
-            this.DOUBLE = this.loadIClass(Descriptor.DOUBLE);
-        } catch (ClassNotFoundException e) {
-            throw new JaninoRuntimeException("Cannot load simple types");
+            this.ANNO_java_lang_Override = this.loadIClass(Descriptor.JAVA_LANG_OVERRIDE);
+
+            this.TYPE_java_lang_AssertionError   = this.loadIClass(Descriptor.JAVA_LANG_ASSERTIONERROR);
+            this.TYPE_java_lang_Boolean          = this.loadIClass(Descriptor.JAVA_LANG_BOOLEAN);
+            this.TYPE_java_lang_Byte             = this.loadIClass(Descriptor.JAVA_LANG_BYTE);
+            this.TYPE_java_lang_Character        = this.loadIClass(Descriptor.JAVA_LANG_CHARACTER);
+            this.TYPE_java_lang_Class            = this.loadIClass(Descriptor.JAVA_LANG_CLASS);
+            this.TYPE_java_lang_Cloneable        = this.loadIClass(Descriptor.JAVA_LANG_CLONEABLE);
+            this.TYPE_java_lang_Double           = this.loadIClass(Descriptor.JAVA_LANG_DOUBLE);
+            this.TYPE_java_lang_Exception        = this.loadIClass(Descriptor.JAVA_LANG_EXCEPTION);
+            this.TYPE_java_lang_Error            = this.loadIClass(Descriptor.JAVA_LANG_ERROR);
+            this.TYPE_java_lang_Float            = this.loadIClass(Descriptor.JAVA_LANG_FLOAT);
+            this.TYPE_java_lang_Integer          = this.loadIClass(Descriptor.JAVA_LANG_INTEGER);
+            this.TYPE_java_lang_Iterable         = this.loadIClass(Descriptor.JAVA_LANG_ITERABLE);
+            this.TYPE_java_lang_Long             = this.loadIClass(Descriptor.JAVA_LANG_LONG);
+            this.TYPE_java_lang_Object           = this.loadIClass(Descriptor.JAVA_LANG_OBJECT);
+            this.TYPE_java_lang_RuntimeException = this.loadIClass(Descriptor.JAVA_LANG_RUNTIMEEXCEPTION);
+            this.TYPE_java_lang_Short            = this.loadIClass(Descriptor.JAVA_LANG_SHORT);
+            this.TYPE_java_lang_String           = this.loadIClass(Descriptor.JAVA_LANG_STRING);
+            this.TYPE_java_lang_StringBuilder    = this.loadIClass(Descriptor.JAVA_LANG_STRINGBUILDER);
+            this.TYPE_java_lang_Throwable        = this.loadIClass(Descriptor.JAVA_LANG_THROWABLE);
+            this.TYPE_java_io_Serializable       = this.loadIClass(Descriptor.JAVA_IO_SERIALIZABLE);
+            this.TYPE_java_util_Iterator         = this.loadIClass(Descriptor.JAVA_UTIL_ITERATOR);
+
+            // CHECKSTYLE LineLength:OFF
+            // CHECKSTYLE Whitespace:OFF
+            this.METH_java_lang_Iterable__iterator                      = this.TYPE_java_lang_Iterable     .findIMethod("iterator", new IClass[0]);
+            this.METH_java_lang_String__concat__java_lang_String        = this.TYPE_java_lang_String       .findIMethod("concat",   new IClass[] { this.TYPE_java_lang_String });
+            this.METH_java_lang_String__valueOf__int                    = this.TYPE_java_lang_String       .findIMethod("valueOf",  new IClass[] { IClass.INT });
+            this.METH_java_lang_String__valueOf__long                   = this.TYPE_java_lang_String       .findIMethod("valueOf",  new IClass[] { IClass.LONG });
+            this.METH_java_lang_String__valueOf__float                  = this.TYPE_java_lang_String       .findIMethod("valueOf",  new IClass[] { IClass.FLOAT });
+            this.METH_java_lang_String__valueOf__double                 = this.TYPE_java_lang_String       .findIMethod("valueOf",  new IClass[] { IClass.DOUBLE });
+            this.METH_java_lang_String__valueOf__char                   = this.TYPE_java_lang_String       .findIMethod("valueOf",  new IClass[] { IClass.CHAR });
+            this.METH_java_lang_String__valueOf__boolean                = this.TYPE_java_lang_String       .findIMethod("valueOf",  new IClass[] { IClass.BOOLEAN });
+            this.METH_java_lang_String__valueOf__java_lang_Object       = this.TYPE_java_lang_String       .findIMethod("valueOf",  new IClass[] { this.TYPE_java_lang_Object });
+            this.METH_java_lang_StringBuilder__append__java_lang_String = this.TYPE_java_lang_StringBuilder.findIMethod("append",   new IClass[] { this.TYPE_java_lang_String });
+            this.METH_java_lang_StringBuilder__toString                 = this.TYPE_java_lang_StringBuilder.findIMethod("toString", new IClass[0]);
+            this.METH_java_util_Iterator__hasNext                       = this.TYPE_java_util_Iterator     .findIMethod("hasNext",  new IClass[0]);
+            this.METH_java_util_Iterator__next                          = this.TYPE_java_util_Iterator     .findIMethod("next",     new IClass[0]);
+
+            this.CTOR_java_lang_StringBuilder__java_lang_String   = this.TYPE_java_lang_StringBuilder.findIConstructor(new IClass[] { this.TYPE_java_lang_String });
+            // CHECKSTYLE Whitespace:ON
+            // CHECKSTYLE LineLength:ON
+        } catch (Exception e) {
+            throw new JaninoRuntimeException("Cannot load simple types", e);
         }
     }
 
     /**
      * Get an {@link IClass} by field descriptor.
-     * 
-     * @return <code>null</code> if an {@link IClass} could not be loaded
-     * @throws {@link ClassNotFoundException} if an exception was raised while loading the {@link IClass}
+     *
+     * @param fieldDescriptor         E.g. 'Lpkg1/pkg2/Outer$Inner;'
+     * @return                        {@code null} if an {@link IClass} could not be loaded
+     * @throws ClassNotFoundException An exception was raised while loading the {@link IClass}
      */
-    public final IClass loadIClass(String fieldDescriptor) throws ClassNotFoundException {
-        if (IClassLoader.DEBUG)
-            System.out.println(this + ": Load type \"" + fieldDescriptor + "\"");
+    public final IClass
+    loadIClass(String fieldDescriptor) throws ClassNotFoundException {
+        if (IClassLoader.DEBUG) System.out.println(this + ": Load type \"" + fieldDescriptor + "\"");
 
         if (Descriptor.isPrimitive(fieldDescriptor)) {
-            return (fieldDescriptor.equals(Descriptor.VOID_) ? IClass.VOID
-                    : fieldDescriptor.equals(Descriptor.BYTE_) ? IClass.BYTE
-                            : fieldDescriptor.equals(Descriptor.CHAR_) ? IClass.CHAR : fieldDescriptor
-                                    .equals(Descriptor.DOUBLE_) ? IClass.DOUBLE : fieldDescriptor
-                                    .equals(Descriptor.FLOAT_) ? IClass.FLOAT
-                                    : fieldDescriptor.equals(Descriptor.INT_) ? IClass.INT : fieldDescriptor
-                                            .equals(Descriptor.LONG_) ? IClass.LONG : fieldDescriptor
-                                            .equals(Descriptor.SHORT_) ? IClass.SHORT : fieldDescriptor
-                                            .equals(Descriptor.BOOLEAN_) ? IClass.BOOLEAN : null);
+            return (
+                fieldDescriptor.equals(Descriptor.VOID)    ? IClass.VOID :
+                fieldDescriptor.equals(Descriptor.BYTE)    ? IClass.BYTE :
+                fieldDescriptor.equals(Descriptor.CHAR)    ? IClass.CHAR :
+                fieldDescriptor.equals(Descriptor.DOUBLE)  ? IClass.DOUBLE :
+                fieldDescriptor.equals(Descriptor.FLOAT)   ? IClass.FLOAT :
+                fieldDescriptor.equals(Descriptor.INT)     ? IClass.INT :
+                fieldDescriptor.equals(Descriptor.LONG)    ? IClass.LONG :
+                fieldDescriptor.equals(Descriptor.SHORT)   ? IClass.SHORT :
+                fieldDescriptor.equals(Descriptor.BOOLEAN) ? IClass.BOOLEAN :
+                null
+            );
         }
 
         // Ask parent IClassLoader first.
         if (this.optionalParentIClassLoader != null) {
             IClass res = this.optionalParentIClassLoader.loadIClass(fieldDescriptor);
-            if (res != null)
-                return res;
+            if (res != null) return res;
         }
 
         // We need to synchronize here because "unloadableIClasses" and
@@ -128,32 +226,31 @@ public abstract class IClassLoader {
         synchronized (this) {
 
             // Class could not be loaded before?
-            if (this.unloadableIClasses.contains(fieldDescriptor))
-                return null;
+            if (this.unloadableIClasses.contains(fieldDescriptor)) return null;
 
             // Class already loaded?
             result = (IClass) this.loadedIClasses.get(fieldDescriptor);
-            if (result != null)
-                return result;
+            if (result != null) return result;
 
             // Special handling for array types.
             if (Descriptor.isArrayReference(fieldDescriptor)) {
 
                 // Load the component type.
-                IClass componentIClass = this.loadIClass(Descriptor.getComponentDescriptor(fieldDescriptor));
-                if (componentIClass == null)
-                    return null;
+                IClass componentIClass = this.loadIClass(
+                    Descriptor.getComponentDescriptor(fieldDescriptor)
+                );
+                if (componentIClass == null) return null;
 
                 // Now get and define the array type.
-                IClass arrayIClass = componentIClass.getArrayIClass(this.OBJECT);
+                IClass arrayIClass = componentIClass.getArrayIClass(this.TYPE_java_lang_Object);
                 this.loadedIClasses.put(fieldDescriptor, arrayIClass);
                 return arrayIClass;
             }
 
+            if (IClassLoader.DEBUG) System.out.println("call IClassLoader.findIClass(\"" + fieldDescriptor + "\")");
+
             // Load the class through the {@link #findIClass(String)} method implemented by the
             // derived class.
-            if (IClassLoader.DEBUG)
-                System.out.println("call IClassLoader.findIClass(\"" + fieldDescriptor + "\")");
             result = this.findIClass(fieldDescriptor);
             if (result == null) {
                 this.unloadableIClasses.add(fieldDescriptor);
@@ -162,86 +259,102 @@ public abstract class IClassLoader {
         }
 
         if (!result.getDescriptor().equalsIgnoreCase(fieldDescriptor)) {
-            throw new JaninoRuntimeException("\"findIClass()\" returned \"" + result.getDescriptor()
-                    + "\" instead of \"" + fieldDescriptor + "\"");
+            throw new JaninoRuntimeException(
+                "\"findIClass()\" returned \""
+                + result.getDescriptor()
+                + "\" instead of \""
+                + fieldDescriptor
+                + "\""
+            );
         }
 
-        if (IClassLoader.DEBUG)
-            System.out.println(this + ": Loaded type \"" + fieldDescriptor + "\" as " + result);
+        if (IClassLoader.DEBUG) System.out.println(this + ": Loaded type \"" + fieldDescriptor + "\" as " + result);
 
         return result;
     }
 
     /**
-     * Find a new {@link IClass} by descriptor; return <code>null</code> if a class for that <code>descriptor</code>
-     * could not be found.
+     * Find a new {@link IClass} by descriptor; return <code>null</code> if a class
+     * for that <code>descriptor</code> could not be found.
      * <p>
-     * Similar {@link java.lang.ClassLoader#findClass(java.lang.String)}, this method must
+     * Similar {@link java.lang.ClassLoader#findClass(java.lang.String)}, this method
+     * must
      * <ul>
-     * <li>Get an {@link IClass} object from somewhere for the given type
-     * <li>Call {@link #defineIClass(IClass)} with that {@link IClass} object as the argument
-     * <li>Return the {@link IClass} object
+     *   <li>Get an {@link IClass} object from somewhere for the given type
+     *   <li>Call {@link #defineIClass(IClass)} with that {@link IClass} object as
+     *       the argument
+     *   <li>Return the {@link IClass} object
      * </ul>
      * <p>
-     * The format of a <code>descriptor</code> is defined in JVMS 4.3.2. Typical descriptors are:
+     * The format of a <code>descriptor</code> is defined in JVMS 4.3.2. Typical
+     * descriptors are:
      * <ul>
-     * <li><code>I</code> (Integer)
-     * <li><code>Lpkg1/pkg2/Cls;</code> (Class declared in package)
-     * <li><code>Lpkg1/pkg2/Outer$Inner;</code> Member class
+     *   <li><code>I</code> (Integer)
+     *   <li><code>Lpkg1/pkg2/Cls;</code> (Class declared in package)
+     *   <li><code>Lpkg1/pkg2/Outer$Inner;</code> Member class
      * </ul>
      * Notice that this method is never called for array types.
      * <p>
-     * Notice that this method is never called from more than one thread at a time. In other words, implementations of
-     * this method need not be synchronized.
-     * 
+     * Notice that this method is never called from more than one thread at a time.
+     * In other words, implementations of this method need not be synchronized.
+     *
      * @return <code>null</code> if a class with that descriptor could not be found
-     * @throws ClassNotFoundException
-     *             if an exception was raised while loading the class
+     * @throws ClassNotFoundException if an exception was raised while loading the class
      */
     protected abstract IClass findIClass(String descriptor) throws ClassNotFoundException;
 
     /**
-     * Define an {@link IClass} in the context of this {@link IClassLoader}. If an {@link IClass} with that descriptor
-     * already exists, a {@link RuntimeException} is thrown.
+     * Define an {@link IClass} in the context of this {@link IClassLoader}.
+     * If an {@link IClass} with that descriptor already exists, a
+     * {@link RuntimeException} is thrown.
      * <p>
-     * This method should only be called from an implementation of {@link #findIClass(String)}.
-     * 
-     * @throws RuntimeException
-     *             A different {@link IClass} object is already defined for this type
+     * This method should only be called from an implementation of
+     * {@link #findIClass(String)}.
+     *
+     * @throws RuntimeException A different {@link IClass} object is already defined for this type
      */
-    protected final void defineIClass(IClass iClass) {
+    protected final void
+    defineIClass(IClass iClass) {
         String descriptor = iClass.getDescriptor();
 
         // Already defined?
         IClass loadedIClass = (IClass) this.loadedIClasses.get(descriptor);
         if (loadedIClass != null) {
-            if (loadedIClass == iClass)
-                return;
+            if (loadedIClass == iClass) return;
             throw new JaninoRuntimeException("Non-identical definition of IClass \"" + descriptor + "\"");
         }
 
         // Define.
         this.loadedIClasses.put(descriptor, iClass);
-        if (IClassLoader.DEBUG)
-            System.out.println(this + ": Defined type \"" + descriptor + "\"");
+        if (IClassLoader.DEBUG) System.out.println(this + ": Defined type \"" + descriptor + "\"");
     }
 
     /**
      * Create an {@link IClassLoader} that looks for classes in the given "boot class
-     * path", then in the given "extension directories", and then in the given "class path".
+     * path", then in the given "extension directories", and then in the given
+     * "class path".
      * <p>
-     * The default for the <code>optionalBootClassPath</code> is the path defined in the system property
-     * "sun.boot.class.path", and the default for the <code>optionalExtensionDirs</code> is the path defined in the
-     * "java.ext.dirs" system property.
+     * The default for the <code>optionalBootClassPath</code> is the path defined in
+     * the system property "sun.boot.class.path", and the default for the
+     * <code>optionalExtensionDirs</code> is the path defined in the "java.ext.dirs"
+     * system property.
      */
-    public static IClassLoader createJavacLikePathIClassLoader(final File[] optionalBootClassPath,
-            final File[] optionalExtDirs, final File[] classPath) {
+    public static IClassLoader
+    createJavacLikePathIClassLoader(
+        final File[] optionalBootClassPath,
+        final File[] optionalExtDirs,
+        final File[] classPath
+    ) {
         ResourceFinder bootClassPathResourceFinder = new PathResourceFinder(
-                optionalBootClassPath == null ? PathResourceFinder.parsePath(System.getProperty("sun.boot.class.path"))
-                        : optionalBootClassPath);
+            optionalBootClassPath == null
+            ? PathResourceFinder.parsePath(System.getProperty("sun.boot.class.path"))
+            : optionalBootClassPath
+        );
         ResourceFinder extensionDirectoriesResourceFinder = new JarDirectoriesResourceFinder(
-                optionalExtDirs == null ? PathResourceFinder.parsePath(System.getProperty("java.ext.dirs"))
-                        : optionalExtDirs);
+            optionalExtDirs == null
+            ? PathResourceFinder.parsePath(System.getProperty("java.ext.dirs"))
+            : optionalExtDirs
+        );
         ResourceFinder classPathResourceFinder = new PathResourceFinder(classPath);
 
         // We can load classes through "ResourceFinderIClassLoader"s, which means
@@ -265,7 +378,7 @@ public abstract class IClassLoader {
         return icl;
     }
 
-    private final IClassLoader optionalParentIClassLoader;
-    private final Map loadedIClasses = new HashMap(); // String descriptor => IClass
-    private final Set unloadableIClasses = new HashSet(); // String descriptor
+    private final IClassLoader                       optionalParentIClassLoader;
+    private final Map<String /*descriptor*/, IClass> loadedIClasses     = new HashMap();
+    private final Set<String /*descriptor*/>         unloadableIClasses = new HashSet();
 }

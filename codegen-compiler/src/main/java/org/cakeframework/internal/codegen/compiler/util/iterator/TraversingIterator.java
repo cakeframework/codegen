@@ -1,3 +1,4 @@
+
 /*
  * Janino - An embedded Java[TM] compiler
  *
@@ -25,46 +26,40 @@
 
 package org.cakeframework.internal.codegen.compiler.util.iterator;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Enumeration;
-import java.util.Iterator;
-import java.util.NoSuchElementException;
-import java.util.Stack;
+import java.util.*;
 
 /**
- * An {@link java.util.Iterator} that iterates over a delegate, and while it encounters an array, a
- * {@link java.util.Collection}, an {@link java.util.Enumeration} or a {@link java.util.Iterator} element, it iterates
- * into it recursively.
+ * An {@link java.util.Iterator} that iterates over a delegate, and while it encounters an array, a {@link
+ * java.util.Collection}, an {@link java.util.Enumeration} or a {@link java.util.Iterator} element, it iterates over it
+ * recursively.
  * <p>
  * Be aware that {@link #hasNext()} must read ahead one element.
  */
-public class TraversingIterator implements Iterator {
+@SuppressWarnings({ "rawtypes", "unchecked" }) public
+class TraversingIterator implements Iterator {
     private final Stack nest = new Stack(); // Iterator
-    private Object nextElement = null;
-    private boolean nextElementRead = false; // Have we read ahead?
+    private Object      nextElement;
+    private boolean     nextElementRead; // Have we read ahead?
 
-    public TraversingIterator(Iterator delegate) {
-        this.nest.push(delegate);
-    }
+    public
+    TraversingIterator(Iterator delegate) { this.nest.push(delegate); }
 
-    public boolean hasNext() {
-        return this.nextElementRead || this.readNext();
-    }
+    @Override public boolean
+    hasNext() { return this.nextElementRead || this.readNext(); }
 
-    public Object next() {
-        if (!this.nextElementRead && !this.readNext())
-            throw new NoSuchElementException();
+    @Override public Object
+    next() {
+        if (!this.nextElementRead && !this.readNext()) throw new NoSuchElementException();
         this.nextElementRead = false;
         return this.nextElement;
     }
 
     /**
      * Reads the next element and stores it in {@link #nextElement}.
-     * 
      * @return <code>false</code> if no more element can be read.
      */
-    private boolean readNext() {
+    private boolean
+    readNext() {
         while (!this.nest.empty()) {
             Iterator it = (Iterator) this.nest.peek();
             if (!it.hasNext()) {
@@ -74,14 +69,18 @@ public class TraversingIterator implements Iterator {
             Object o = it.next();
             if (o instanceof Iterator) {
                 this.nest.push(o);
-            } else if (o instanceof Object[]) {
+            } else
+            if (o instanceof Object[]) {
                 this.nest.push(Arrays.asList((Object[]) o).iterator());
-            } else if (o instanceof Collection) {
+            } else
+            if (o instanceof Collection) {
                 this.nest.push(((Collection) o).iterator());
-            } else if (o instanceof Enumeration) {
+            } else
+            if (o instanceof Enumeration) {
                 this.nest.push(new EnumerationIterator((Enumeration) o));
-            } else {
-                this.nextElement = o;
+            } else
+            {
+                this.nextElement     = o;
                 this.nextElementRead = true;
                 return true;
             }
@@ -90,11 +89,10 @@ public class TraversingIterator implements Iterator {
     }
 
     /**
-     * @throws UnsupportedOperationException
-     *             iff the {@link Iterator} currently being traversed doesn't support element removal
+     * @throws UnsupportedOperationException iff the {@link Iterator} currently being
+     *                                       traversed doesn't support element removal
      * @see Iterator#remove()
      */
-    public void remove() {
-        ((Iterator) this.nest.peek()).remove();
-    }
+    @Override public void
+    remove() { ((Iterator) this.nest.peek()).remove(); }
 }

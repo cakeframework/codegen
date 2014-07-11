@@ -29,37 +29,54 @@ import java.security.AccessController;
 import java.security.PrivilegedAction;
 
 import org.cakeframework.internal.codegen.compiler.compiler.AbstractCompilerFactory;
+import org.cakeframework.internal.codegen.compiler.compiler.AbstractJavaSourceClassLoader;
 import org.cakeframework.internal.codegen.compiler.compiler.IClassBodyEvaluator;
+import org.cakeframework.internal.codegen.compiler.compiler.ICompilerFactory;
 import org.cakeframework.internal.codegen.compiler.compiler.ISimpleCompiler;
 
+/** The JANINO implementation of {@link ICompilerFactory}. */
+@SuppressWarnings({ "rawtypes", "unchecked" })
 public class CompilerFactory extends AbstractCompilerFactory {
 
+    @Override
     public String getId() {
         return "org.codehaus.janino";
     }
 
+    @Override
+    public String toString() {
+        return "janino";
+    }
+
+    @Override
     public String getImplementationVersion() {
         return CompilerFactory.class.getPackage().getImplementationVersion();
     }
 
+    @Override
     public IClassBodyEvaluator newClassBodyEvaluator() {
         return new ClassBodyEvaluator();
     }
 
+    @Override
     public ISimpleCompiler newSimpleCompiler() {
         return new SimpleCompiler();
     }
 
-    public JavaSourceClassLoader newJavaSourceClassLoader() {
-        return (JavaSourceClassLoader) AccessController.doPrivileged(new PrivilegedAction() {
+    @Override
+    public AbstractJavaSourceClassLoader newJavaSourceClassLoader() {
+        return (AbstractJavaSourceClassLoader) AccessController.doPrivileged(new PrivilegedAction() {
+            @Override
             public Object run() {
                 return new JavaSourceClassLoader();
             }
         });
     }
 
-    public JavaSourceClassLoader newJavaSourceClassLoader(final ClassLoader parentClassLoader) {
-        return (JavaSourceClassLoader) AccessController.doPrivileged(new PrivilegedAction() {
+    @Override
+    public AbstractJavaSourceClassLoader newJavaSourceClassLoader(final ClassLoader parentClassLoader) {
+        return (AbstractJavaSourceClassLoader) AccessController.doPrivileged(new PrivilegedAction() {
+            @Override
             public Object run() {
                 return new JavaSourceClassLoader(parentClassLoader);
             }

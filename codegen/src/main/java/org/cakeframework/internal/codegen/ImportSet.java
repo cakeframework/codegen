@@ -26,7 +26,7 @@ import java.util.HashSet;
 
 /**
  * A set of unique class imports.
- * 
+ *
  * @author Kasper Nielsen
  */
 public final class ImportSet {
@@ -43,7 +43,7 @@ public final class ImportSet {
 
     /**
      * Equivalent to calling {@link #add(Class)} for each specified class.
-     * 
+     *
      * @param classes
      *            the classes to add
      * @return this import set
@@ -65,7 +65,7 @@ public final class ImportSet {
      * component type will be added.
      * <p>
      * if the specified class is null it is ignored.
-     * 
+     *
      * @param clazz
      *            the class to add to imports.
      * @return this import set
@@ -102,9 +102,15 @@ public final class ImportSet {
         return this;
     }
 
+    public ImportSet addExplicitImport(String name) {
+        requireNonNull(name);
+        imports.add(name);
+        return this;
+    }
+
     /**
      * Adds the specified import set to this set.
-     * 
+     *
      * @param other
      *            the import set to add to this import set
      * @return this import set
@@ -118,7 +124,7 @@ public final class ImportSet {
 
     /**
      * Returns a copy of this import set.
-     * 
+     *
      * @return a copy of this import set
      */
     public ImportSet clone() {
@@ -146,7 +152,7 @@ public final class ImportSet {
 
     /**
      * Returns the number of imports.
-     * 
+     *
      * @return the number of imports
      */
     public int size() {
@@ -165,7 +171,7 @@ public final class ImportSet {
      * java.*, javax.*, org.*, com.* come first and then other classes in alphabetic order.
      * <p>
      * Unix line ending are used even on windows platforms.
-     * 
+     *
      * @param sb
      *            the string builder to write to
      * @return the specified string builder
@@ -205,7 +211,7 @@ public final class ImportSet {
 
     /**
      * Writes a single group of imports. Basically it makes sure to insert some spaces between imports.
-     * 
+     *
      * @param sb
      *            the string builder
      * @param array

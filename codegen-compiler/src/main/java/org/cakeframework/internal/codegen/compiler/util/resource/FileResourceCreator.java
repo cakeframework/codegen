@@ -1,3 +1,4 @@
+
 /*
  * Janino - An embedded Java[TM] compiler
  *
@@ -25,33 +26,29 @@
 
 package org.cakeframework.internal.codegen.compiler.util.resource;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 
-/**
- * Stores a stream of bytes in a named resource.
- */
-public abstract class FileResourceCreator implements ResourceCreator {
+/** Stores a stream of bytes in a named resource. */
+public abstract
+class FileResourceCreator implements ResourceCreator {
 
-    public final OutputStream createResource(String resourceName) throws IOException {
+    @Override public final OutputStream
+    createResource(String resourceName) throws IOException {
         File file = this.getFile(resourceName);
 
         // Create directory for class file if it does not exist.
         File dir = file.getParentFile();
         if (dir != null && !dir.isDirectory()) {
-            if (!dir.mkdirs())
-                throw new IOException("Cannot create directory for class file \"" + file + "\"");
+            if (!dir.mkdirs()) throw new IOException("Cannot create directory for class file \"" + file + "\"");
         }
 
         // Create the file.
         return new FileOutputStream(file);
     }
 
-    public final boolean deleteResource(String resourceName) {
-        return this.getFile(resourceName).delete();
-    }
+    @Override public final boolean
+    deleteResource(String resourceName) { return this.getFile(resourceName).delete(); }
 
+    /** @return The file into which the contents is written */
     protected abstract File getFile(String resourceName);
 }

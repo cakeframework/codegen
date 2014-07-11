@@ -1,3 +1,4 @@
+
 /*
  * Janino - An embedded Java[TM] compiler
  *
@@ -25,8 +26,8 @@
 
 package org.cakeframework.internal.codegen.compiler.util.resource;
 
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
+
 
 /**
  * A {@link Resource} is "something" that is typically found by a
@@ -34,29 +35,29 @@ import java.io.InputStream;
  * reading, and optionally has a {@link #lastModified()} property.
  * <p>
  * There also exists a {@link org.cakeframework.internal.codegen.compiler.util.resource.ResourceCreator} concept which
- * opens a resource for writing, but that happens directly and not through an intermediate {@link Resource} object.
+ * opens a resource for writing, but that happens directly and not through an intermediate
+ * {@link Resource} object.
  *
  * @see org.cakeframework.internal.codegen.compiler.util.resource.ResourceFinder
  * @see org.cakeframework.internal.codegen.compiler.util.resource.ResourceCreator
  */
-public interface Resource {
+public
+interface Resource {
 
-    /**
-     * Opens the resource. The caller is responsible for closing the {@link java.io.InputStream}.
-     */
+    /** Opens the resource. The caller is responsible for closing the {@link java.io.InputStream}. */
     InputStream open() throws IOException;
 
     /**
-     * Returns a decorative "file name" that can be used for reporting errors and the like. It does not necessarily map
-     * to a file in the local file system!
+     * Returns a decorative "file name" that can be used for reporting
+     * errors and the like. It does not necessarily map to a file in the
+     * local file system!
      */
     String getFileName();
 
     /**
-     * Returns the time of the last modification, in milliseconds since 1970, or <code>0L</code> if the time of the last
-     * modification cannot be determined.
+     * Returns the time of the last modification, in milliseconds since
+     * 1970, or <code>0L</code> if the time of the last modification cannot
+     * be determined.
      */
-    default long lastModified() {
-        return 0;
-    }
+    long lastModified();
 }

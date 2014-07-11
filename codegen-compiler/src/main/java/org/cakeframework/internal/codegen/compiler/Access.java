@@ -1,3 +1,4 @@
+
 /*
  * Janino - An embedded Java[TM] compiler
  *
@@ -28,21 +29,28 @@ package org.cakeframework.internal.codegen.compiler;
 import org.cakeframework.internal.codegen.compiler.util.Enumerator;
 import org.cakeframework.internal.codegen.compiler.util.EnumeratorFormatException;
 
-/**
- * Return value for {@link IClass.IMember#getAccess}. JLS2 6.6
- */
-public final class Access extends Enumerator {
+/** Return value for {@link IClass.IMember#getAccess}. */
+public final
+class Access extends Enumerator {
+
+    /** Representation of PRIVATE accessibility. */
     public static final Access PRIVATE = new Access("private");
+
+    /** Representation of PROTECTED accessibility. */
     public static final Access PROTECTED = new Access("protected");
+
+    /** Representation of DEFAULT accessibility. */
     public static final Access DEFAULT = new Access("/*default*/");
+
+    /** Representation of PUBLIC accessibility. */
     public static final Access PUBLIC = new Access("public");
 
     // These MUST be declared exactly like this:
-    private Access(String name) {
-        super(name);
-    }
+    private Access(String name) { super(name); }
 
-    public static Access fromString(String name) throws EnumeratorFormatException {
+    /** @return The {@code name} converted to {@link Access} */
+    public static Access
+    fromString(String name) throws EnumeratorFormatException {
         return (Access) Enumerator.fromString(name, Access.class);
     }
 }

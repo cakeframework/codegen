@@ -1,3 +1,4 @@
+
 /*
  * Janino - An embedded Java[TM] compiler
  *
@@ -25,34 +26,32 @@
 
 package org.cakeframework.internal.codegen.compiler.util.resource;
 
-import java.io.IOException;
-import java.io.OutputStream;
+import java.io.*;
 
 /**
  * Opens a resource, characterized by a name, for writing.
  * <p>
- * There also exists a concept {@link org.cakeframework.internal.codegen.compiler.util.resource.ResourceFinder} that finds
- * {@link org.cakeframework.internal.codegen.compiler.util.resource.Resource}s for reading.
- * 
+ * There also exists a concept {@link org.cakeframework.internal.codegen.compiler.util.resource.ResourceFinder} that
+ * finds {@link org.cakeframework.internal.codegen.compiler.util.resource.Resource}s for reading.
+ *
  * @see org.cakeframework.internal.codegen.compiler.util.resource.ResourceFinder
  */
-public interface ResourceCreator {
+public
+interface ResourceCreator {
 
     /**
      * Create the designated resource.
-     * 
-     * @param resourceName
-     *            Designates the resource; typically structured by slashes ("/") like "
-     *            <code>com/foo/pkg/Bar.class</code>"
-     * @return Bytes written to this {@link OutputStream} are stored in the resource
-     * @throws IOException
-     *             Problems creating the resource
+     *
+     * @param resourceName Designates the resource; typically structured by slashes ("/") like
+     *                     "<code>com/foo/pkg/Bar.class</code>"
+     * @return             Bytes written to this {@link OutputStream} are stored in the resource
+     * @throws IOException Problems creating the resource
      */
     OutputStream createResource(String resourceName) throws IOException;
 
     /**
      * Deletes the resource with the given name.
-     * 
+     *
      * @return <code>false</code> if the resource could not be deleted
      */
     boolean deleteResource(String resourceName);

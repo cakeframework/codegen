@@ -15,6 +15,8 @@
  */
 package org.cakeframework.internal.codegen.model.expression;
 
+import static org.cakeframework.internal.codegen.model.expression.Expressions.literal;
+
 import java.util.Objects;
 
 import org.cakeframework.internal.codegen.model.visitor.CodegenVisitor;
@@ -78,7 +80,7 @@ public final class Literal extends Expression {
         } else if (type == long.class) {
             return new Literal(Long.valueOf(0L));
         } else {
-            throw new RuntimeException("Not implemented yet " + type);
+            return literal(null);
         }
     }
 
