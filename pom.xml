@@ -23,7 +23,7 @@
   <groupId>org.cakeframework.codegen</groupId>
   <modelVersion>4.0.0</modelVersion>
   <artifactId>codegen-parent</artifactId>
-  <version>0.2-SNAPSHOT</version>
+  <version>0.8-SNAPSHOT</version>
   <packaging>pom</packaging>
   <name>Codegen Parent</name>
   <description>Codegen</description>
